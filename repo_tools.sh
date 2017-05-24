@@ -22,13 +22,12 @@ function repo_update_to_master()
 {
     git fetch --all
     git checkout master
-    git reset --hard upstream/master
+    git reset --hard origin/master
     git push origin master
 }
 
 function repo_update_all_to_master()
 {
-    # repo_do_it_to_all "git fetch --all; git checkout master; git reset --hard upstream/master"
     repo_do_it_to_all repo_update_to_master
 }
 
@@ -49,5 +48,8 @@ function repo_delete_all_local_branches()
         if [ "$branch" != "master" ]; then
             git branch -D "$branch"
         fi
+    done
+    for remote_name in $(git remote); do 
+        git remote prune $remote_name
     done
 }
