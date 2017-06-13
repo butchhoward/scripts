@@ -46,6 +46,7 @@ function venv_create()
 
 function venv_activate()
 {
+    venv_deactivate
     local activate_script=${1:-$(venv_location)}/bin/activate
     [ -r "${activate_script}" ] && source "${activate_script}"
 }
