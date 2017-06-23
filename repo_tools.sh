@@ -35,7 +35,7 @@ function repo_do_it_to_all_quietly()
     for d in `ls -d *`;do 
         if [ -d $d/.git ]; then 
             pushd $d &> /dev/null
-            $@
+            $@ &> /dev/null
             popd &> /dev/null
         fi;
     done
