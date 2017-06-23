@@ -1,5 +1,22 @@
 #source this script to get the useful functions
 
+
+# The do_it functions apply everything on the command-line as a command in each git folder below the current one
+# I have not figured out exaclty how to execute complex things in that command
+# So:
+#       repo_do_it_to_all git checkout master
+#
+# works, but something more complicated will not:
+#       repo_do_it_to_all_quietly  if ! repo_is_clean; then git status; fi;
+
+# will fail
+#
+# You can work around this by putting complicated things in a function and using the function
+#       function do_this() { if ! repo_is_clean; then git status; fi; }
+#       repo_do_it_to_all_quietly do_this
+#
+# (anything more complicated than that should be scripted on its own)
+
 function repo_do_it_to_all()
 {
     for d in `ls -d *`;do 
@@ -7,6 +24,17 @@ function repo_do_it_to_all()
             pushd $d &> /dev/null
             echo ""
             echo "====$(pwd)===>[$@]"
+            $@
+            popd &> /dev/null
+        fi;
+    done
+}
+
+function repo_do_it_to_all_quietly()
+{
+    for d in `ls -d *`;do 
+        if [ -d $d/.git ]; then 
+            pushd $d &> /dev/null
             $@
             popd &> /dev/null
         fi;
@@ -60,6 +88,15 @@ function repo_clean_fdx_all()
     repo_do_it_to_all "git clean -fdx"
 }
 
+function repo_prune_remote_branches()
+{
+    for remote_name in $(git remote); do 
+        git remote prune $remote_name
+    done
+}
+
+# Have a care, this deletes them ALL it does not check whether they have been pushed or merged.
+# It does not remove commits, so you can probably get back to the code (at least until a purge happens)
 function repo_delete_all_local_branches()
 {
     git checkout master
@@ -68,7 +105,5 @@ function repo_delete_all_local_branches()
             git branch -D "$branch"
         fi
     done
-    for remote_name in $(git remote); do 
-        git remote prune $remote_name
-    done
+    repo_prune_remote_branches
 }
