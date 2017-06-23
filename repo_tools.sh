@@ -13,6 +13,25 @@ function repo_do_it_to_all()
     done
 }
 
+repo_is_clean() 
+{
+    git update-index -q --ignore-submodules --refresh
+
+    # unstaged changes in the working tree
+    if ! git diff-files --quiet --ignore-submodules --
+    then
+        return 1
+    fi
+
+    # uncommitted changes in the index
+    if ! git diff-index --cached --quiet HEAD --ignore-submodules --
+    then
+        return 2
+    fi
+
+    return 0
+}
+
 function repo_fetch_all()
 {
     repo_do_it_to_all "git fetch --all"
