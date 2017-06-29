@@ -4,9 +4,9 @@ function venv_location()
 {
     local location=$(git rev-parse --show-toplevel 2>/dev/null)
     if [ -z "${location}" ]; then
-        location="venv"
+        location=".venv"
     else
-        location="../venv/${location##*/}"
+        location="../.venv/${location##*/}"
     fi
     echo ${location}
 }
