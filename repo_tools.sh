@@ -76,12 +76,19 @@ function repo_fetch_all()
     repo_do_it_to_all "git fetch --all"
 }
 
+function repo_update_to_branch()
+{
+    local BRANCH=${1:-"master"}
+
+    git fetch --all
+    git checkout ${BRANCH}
+    git reset --hard origin/${BRANCH}
+    git push origin ${BRANCH}
+}
+
 function repo_update_to_master()
 {
-    git fetch --all
-    git checkout master
-    git reset --hard origin/master
-    git push origin master
+    repo_update_to_branch master
 }
 
 function repo_update_all_to_master()
