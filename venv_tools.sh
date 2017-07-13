@@ -6,7 +6,7 @@ function venv_location()
     if [ -z "${location}" ]; then
         location=".venv"
     else
-        location="../.venv/${location##*/}"
+        location="${location}/../.venv/${location##*/}"
     fi
     echo ${location}
 }
