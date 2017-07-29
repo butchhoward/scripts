@@ -117,9 +117,11 @@ function repo_prune_remote_branches()
 # It does not remove commits, so you can probably get back to the code (at least until a purge happens)
 function repo_delete_all_local_branches()
 {
-    git checkout master
+    local MASTER_BRANCH=${1:-"master"}
+
+    git checkout "${MASTER_BRANCH}"
     for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-        if [ "$branch" != "master" ]; then
+        if [ "$branch" != "${MASTER_BRANCH}" ]; then
             git branch -D "$branch"
         fi
     done
