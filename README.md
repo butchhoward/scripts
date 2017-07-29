@@ -36,3 +36,9 @@ function venv_rebuild()
     start_rabbit
 }
 ```
+
+# Candy
+
+## gource-git-dir
+
+Use the gource application to make a pretty graphic display of the commit history a folder full of git repositories. See the script for more information.
