@@ -146,7 +146,6 @@ function git_supply()
 
     if ! $USE_ALL_BRANCHES ; then
         IFS=',' read -r -a BRANCHES <<< "$BRANCH"
-        echoerr ${BRANCHES[@]}
     fi
 
     while true
@@ -162,7 +161,6 @@ function git_supply()
                 if $USE_ALL_BRANCHES ; then
                     BRANCH=$(git_all_branches $REMOTE $MAX_BRANCHES)
                     IFS=',' read -r -a BRANCHES <<< "$BRANCH"                    
-                    echoerr "!!"${BRANCHES[@]}
                 fi
 
                 for B in "${BRANCHES[@]}"; do
