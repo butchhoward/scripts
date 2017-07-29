@@ -125,10 +125,10 @@ function git_supply()
     while true
     do
 
-        for d in $(ls -d *); do 
-            if [ -d ${d}/.git ]; then 
+        for REPO in $(ls -d *); do 
+            if [ -d ${REPO}/.git ]; then 
 
-                pushd ${d} &> /dev/null
+                pushd ${REPO} &> /dev/null
 
                 local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
@@ -137,21 +137,21 @@ function git_supply()
                     IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
                 fi
 
-                for B in "${BRANCHES[@]}"; do
+                for BRANCH in "${BRANCHES[@]}"; do
                     
-                    git fetch "${REMOTE}" "${B}" >/dev/null 2>&1
+                    git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1
 
-                    local BRANCH_KEY="${d}_${B}"
+                    local BRANCH_KEY="${REPO}_${BRANCH}"
                     local SHA=${SHAS["${BRANCH_KEY}"]:-"${INITIAL_COMMIT_SHA}"}
 
-                    for SHA in $(git rev-list --reverse --first-parent "${SHA}..${REMOTE}/${B}")
+                    for SHA in $(git rev-list --reverse --first-parent "${SHA}..${REMOTE}/${BRANCH}")
                     do
                         AUTHOR=$(git log --format=%an "${SHA}" --max-count=1)
                         TIMESTAMP=$(git log --format=%at "${SHA}" --max-count=1)
                         PREFIX="${TIMESTAMP}|${AUTHOR}|"
                         git diff-tree -r --no-commit-id --name-status ${SHA} | tr '\t' '|' | while read SUFFIX
                         do
-                            echo "${PREFIX}$(prepend_base_to_path ${PROJECT_BASE}/${d}/${B} ${SUFFIX})" >> "${STAGE_FILE}"
+                            echo "${PREFIX}$(prepend_base_to_path ${PROJECT_BASE}/${REPO}/${BRANCH} ${SUFFIX})" >> "${STAGE_FILE}"
                         done
                     done
 
@@ -210,8 +210,8 @@ function git_all_branches()
     local LIMIT=${2:-100}
     local BRANCHES=''
 
-    for b in $(git for-each-ref --count=${LIMIT} --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
-        if [ "HEAD" == "${b}" ]; then
+    for BRANCH in $(git for-each-ref --count=${LIMIT} --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
+        if [ "HEAD" == "${BRANCH}" ]; then
             continue
         elif [ -n "${BRANCHES}" ]; then
             BRANCHES="${BRANCHES},"
