@@ -133,7 +133,7 @@ function git_supply()
                 local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
                 if ${USE_ALL_BRANCHES} ; then
-                    BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}")
+                    BRANCH=$(git_all_branches "${REMOTE}" ${MAX_BRANCHES})
                     IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
                 fi
 
@@ -216,7 +216,7 @@ function git_all_branches()
         elif [ -n "${BRANCHES}" ]; then
             BRANCHES="${BRANCHES},"
         fi
-        BRANCHES="${BRANCHES}${b}"
+        BRANCHES="${BRANCHES}${BRANCH}"
     done
     echo ${BRANCHES}
 }
