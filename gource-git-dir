@@ -102,46 +102,6 @@ echoerr()
     printf "%s\n" "$*" >&2
 }
 
-function gource_consume()
-{
-    local TITLE=$1
-    shift
-    gource --title "${TITLE}" --key \
-                              --fullscreen \
-                              --hide root,usernames,filenames,mouse \
-                              --log-format custom \
-                              --file-idle-time 0 \
-                              --max-files 0 \
-                              $@ \
-                              - <&0
-}
-
-function prepend_base_to_path()
-{
-    #A|images/discussions/2017-06-09_CAN-In-A-Box/can-in-a-box.jpg
-    local PROJECT_BASE=$1
-    local STATUS_AND_PATH=$2
-    echo ${STATUS_AND_PATH} | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
-
-}
-
-function git_all_branches()
-{
-    local REMOTE=$1
-    local LIMIT=${2:-100}
-    local BRANCHES=''
-
-    for b in $(git for-each-ref --count=$LIMIT --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
-        if [ "HEAD" == "$b" ]; then
-            continue
-        elif [ -n "${BRANCHES}" ]; then
-            BRANCHES="${BRANCHES},"
-        fi
-        BRANCHES="${BRANCHES}${b}"
-    done
-    echo $BRANCHES
-}
-
 function git_supply()
 {
     local PROJECT_BASE=$1
@@ -203,19 +163,66 @@ function git_supply()
             fi
         done
 
-        #the output from the sort is the output for gource
-        if [ -e "${STAGE_FILE}" ]; then
-            sort -n "${STAGE_FILE}"
-            rm $STAGE_FILE &>/dev/null
-        fi
+        ship_the_log_file "${STAGE_FILE}"
 
         test $INTERVAL = 0 && break
         sleep $INTERVAL
     done
 }
 
-# A POSIX variable
-OPTIND=1         # Reset in case getopts has been used previously in the shell.
+function gource_consume()
+{
+    local TITLE=$1
+    shift
+    gource --title "${TITLE}" --key \
+                              --fullscreen \
+                              --hide root,usernames,filenames,mouse \
+                              --log-format custom \
+                              --file-idle-time 0 \
+                              --max-files 0 \
+                              $@ \
+                              - <&0
+}
+
+function ship_the_log_file
+{
+    local STAGE_FILE=$1
+
+    #the output from the sort is the output for gource
+    if [ -e "${STAGE_FILE}" ]; then
+        sort -n "${STAGE_FILE}"
+        rm "${STAGE_FILE}" &>/dev/null
+    fi
+    
+}
+function prepend_base_to_path()
+{
+    #A|images/discussions/2017-06-09_CAN-In-A-Box/can-in-a-box.jpg
+    local PROJECT_BASE=$1
+    local STATUS_AND_PATH=$2
+    echo ${STATUS_AND_PATH} | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
+
+}
+
+function git_all_branches()
+{
+    local REMOTE=$1
+    local LIMIT=${2:-100}
+    local BRANCHES=''
+
+    for b in $(git for-each-ref --count=$LIMIT --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
+        if [ "HEAD" == "$b" ]; then
+            continue
+        elif [ -n "${BRANCHES}" ]; then
+            BRANCHES="${BRANCHES},"
+        fi
+        BRANCHES="${BRANCHES}${b}"
+    done
+    echo $BRANCHES
+}
+
+
+OPTIND=1
 
 PROJECT_BASE="BASE"
 REMOTE="origin"
