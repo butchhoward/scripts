@@ -144,8 +144,9 @@ function git_supply()
     #requires Bash 4.x - associative array using directory name as key
     declare -A SHAS=()
 
-    if [ ! USE_ALL_BRANCHES ]; then
+    if ! $USE_ALL_BRANCHES ; then
         IFS=',' read -r -a BRANCHES <<< "$BRANCH"
+        echoerr ${BRANCHES[@]}
     fi
 
     while true
@@ -158,9 +159,10 @@ function git_supply()
 
                 local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
-                if [ USE_ALL_BRANCHES ]; then
+                if $USE_ALL_BRANCHES ; then
                     BRANCH=$(git_all_branches $REMOTE $MAX_BRANCHES)
                     IFS=',' read -r -a BRANCHES <<< "$BRANCH"                    
+                    echoerr "!!"${BRANCHES[@]}
                 fi
 
                 for B in "${BRANCHES[@]}"; do
