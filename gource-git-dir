@@ -47,25 +47,36 @@ Usage:
 
     Pass gource options to the gource invocation by putting '--' after all the options for gource-git-dir
     and then the gource options. gource is run with some options already set:
-        gource --title "${TITLE}" --key \
-                                --fullscreen \
-                                --hide root,usernames,filenames,mouse \
-                                --log-format custom \
-                                --file-idle-time 0 \
-                                --max-files 0
+        gource --title "${TITLE}" \\
+               --key \\
+               --fullscreen \\
+               --hide root,usernames,filenames,mouse \\
+               --log-format custom \\
+               --file-idle-time 0 \\
+               --max-files 0
                                 
     See the gource wiki for listings of its options.
+
+Installation:
+
+    gource can be instlaled on Mac OSX with 
+        brew install gource
+    
+    Check your bash version with 
+        bash --version
+    
+    If you need a newer version, install it with
+        brew install bash
 
 Example:
 
 Given the folder structure below where all of the folders under ./prpl are git repositories
 And ./prpl is the current directory
 And the script is run as 
-    gource-git-dir -p Loop -r origin -b master,develop -i 10 -- --background-colour FFFFFF
+    gource-git-dir -p Loop -r origin -b master,develop -i 10
 
-Then a beautiful display graphic of changes to the repositories will be displayed.
-The display is fullscreen. Press <esc> to exit. See the gource wiki for shortcut keys to modify
-The display while it is running.
+Then a beautiful display graphic of changes to the repositories will be displayed after a short pause
+to collect the initial logs.
 
 ./prpl
   |-pRpl
@@ -75,7 +86,10 @@ The display while it is running.
   |-pRpl-rest-client
 
 The display will first show how the repositories evolved over time from the initial commits. When
-it catches up to the current state, then it will poll each interval for new commits to display.
+it catches up to the current state, then it will poll each interval for new commits to display. The gource 
+will start in full-screen mode. Press <ALT>-<ENTER> to change between full-screen and windowed. Press
+<ESC> to quit (you might also have to <CTRL-C> the program in the terminal to get the polling piece to stop).
+See the gource wiki for shortcut keys to modify the display while it is running.
 
 Inspired by a similar display at a client site.
 Some script ideas based on code at https://github.com/whitewhidow/gource-live
@@ -151,7 +165,7 @@ function git_supply()
     while true
     do
 
-        for d in `ls -d *`;do 
+        for d in $(ls -d *); do 
             if [ -d $d/.git ]; then 
 
                 pushd $d &> /dev/null
