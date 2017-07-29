@@ -113,49 +113,49 @@ function git_supply()
     local BRANCHES=''
   
     local STAGE_FILE="/tmp/gource_staging.txt"
-    rm $STAGE_FILE &>/dev/null
+    rm ${STAGE_FILE} &>/dev/null
   
     #requires Bash 4.x - associative array using directory name as key
     declare -A SHAS=()
 
-    if ! $USE_ALL_BRANCHES ; then
-        IFS=',' read -r -a BRANCHES <<< "$BRANCH"
+    if ! ${USE_ALL_BRANCHES} ; then
+        IFS=',' read -r -a BRANCHES <<< "${BRANCH}"
     fi
 
     while true
     do
 
         for d in $(ls -d *); do 
-            if [ -d $d/.git ]; then 
+            if [ -d ${d}/.git ]; then 
 
-                pushd $d &> /dev/null
+                pushd ${d} &> /dev/null
 
                 local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
-                if $USE_ALL_BRANCHES ; then
-                    BRANCH=$(git_all_branches $REMOTE $MAX_BRANCHES)
-                    IFS=',' read -r -a BRANCHES <<< "$BRANCH"                    
+                if ${USE_ALL_BRANCHES} ; then
+                    BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}")
+                    IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
                 fi
 
                 for B in "${BRANCHES[@]}"; do
                     
-                    git fetch $REMOTE "${B}" >/dev/null 2>&1
+                    git fetch "${REMOTE}" "${B}" >/dev/null 2>&1
 
                     local BRANCH_KEY="${d}_${B}"
-                    local SHA=${SHAS["$BRANCH_KEY"]:-"${INITIAL_COMMIT_SHA}"}
+                    local SHA=${SHAS["${BRANCH_KEY}"]:-"${INITIAL_COMMIT_SHA}"}
 
-                    for SHA in $(git rev-list --reverse --first-parent $SHA..$REMOTE/$B)
+                    for SHA in $(git rev-list --reverse --first-parent "${SHA}..${REMOTE}/${B}")
                     do
-                        AUTHOR=$(git log --format=%an $SHA --max-count=1)
-                        TIMESTAMP=$(git log --format=%at $SHA --max-count=1)
-                        PREFIX="$TIMESTAMP|$AUTHOR|"
-                        git diff-tree -r --no-commit-id --name-status $SHA | tr '\t' '|' | while read SUFFIX
+                        AUTHOR=$(git log --format=%an "${SHA}" --max-count=1)
+                        TIMESTAMP=$(git log --format=%at "${SHA}" --max-count=1)
+                        PREFIX="${TIMESTAMP}|${AUTHOR}|"
+                        git diff-tree -r --no-commit-id --name-status ${SHA} | tr '\t' '|' | while read SUFFIX
                         do
-                            echo "$PREFIX$(prepend_base_to_path ${PROJECT_BASE}/${d}/${B} ${SUFFIX})" >> $STAGE_FILE
+                            echo "${PREFIX}$(prepend_base_to_path ${PROJECT_BASE}/${d}/${B} ${SUFFIX})" >> "${STAGE_FILE}"
                         done
                     done
 
-                    SHAS["${BRANCH_KEY}"]=$SHA
+                    SHAS["${BRANCH_KEY}"]=${SHA}
 
                 done
                 popd &> /dev/null
@@ -165,8 +165,8 @@ function git_supply()
 
         ship_the_log_file "${STAGE_FILE}"
 
-        test $INTERVAL = 0 && break
-        sleep $INTERVAL
+        test ${INTERVAL} = 0 && break
+        sleep ${INTERVAL}
     done
 }
 
@@ -210,15 +210,15 @@ function git_all_branches()
     local LIMIT=${2:-100}
     local BRANCHES=''
 
-    for b in $(git for-each-ref --count=$LIMIT --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
-        if [ "HEAD" == "$b" ]; then
+    for b in $(git for-each-ref --count=${LIMIT} --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
+        if [ "HEAD" == "${b}" ]; then
             continue
         elif [ -n "${BRANCHES}" ]; then
             BRANCHES="${BRANCHES},"
         fi
         BRANCHES="${BRANCHES}${b}"
     done
-    echo $BRANCHES
+    echo ${BRANCHES}
 }
 
 
@@ -232,22 +232,22 @@ USE_ALL_BRANCHES=false
 MAX_BRANCHES=100
 
 while getopts "hp:r:b:i:BN:" opt; do
-    case "$opt" in
+    case "${opt}" in
     h|\?)
         show_help
         exit 0
         ;;
-    p)  PROJECT_BASE=$OPTARG
+    p)  PROJECT_BASE=${OPTARG}
         ;;
-    r)  REMOTE=$OPTARG
+    r)  REMOTE=${OPTARG}
         ;;
-    b)  BRANCH=$OPTARG
+    b)  BRANCH=${OPTARG}
         ;;
     B) USE_ALL_BRANCHES=true
         ;;
-    N) MAX_BRANCHES=$OPTARG
+    N) MAX_BRANCHES=${OPTARG}
         ;;
-    i)  INTERVAL=$OPTARG
+    i)  INTERVAL=${OPTARG}
         ;;
     esac
 done
@@ -256,4 +256,4 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
 
-git_supply $PROJECT_BASE $REMOTE $BRANCH $INTERVAL $USE_ALL_BRANCHES $MAX_BRANCHES | gource_consume $PROJECT_BASE "$@"
+git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" | gource_consume "${PROJECT_BASE}" "$@"
