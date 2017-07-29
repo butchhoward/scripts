@@ -1,54 +1,76 @@
 #!/usr/bin/env bash
 
-# Present pretty OpenGL display of activity in git repositories.
 
-# Requires:
-#     gource http://gource.io/ 
-#     bash version >= 4.x to get associate array support
+function show_help()
+{
 
-#     A folder with folders beneath it which are git repositories
+cat<<EOF
 
-# Usage:
-#     gource-git-dir.sh ProjectName RemoteOrigin BranchesToDisplay PollingInterval
-#         ProjectName - defaults to "Base"
-#             This is a name to aide gource in displaying multiple branches
-#             It will also be displayed in the lower left of the window
 
-#         RemoteOrigin - defaults to "origin"
-#             This is the git remote for fetching and displaying logs from
+Present pretty OpenGL display of activity in git repositories.
 
-#         BranchesToDisplay - defaults to "master"
-#             A comma-delimited list of branch names that will be used to display logs
-#             Example: "master,develop"
-#             It's best if all the branches listed exist in all the repos. If that is not true, 
-#               it will not stop the script from gathering the logs from the branches that
-#               do exist. You will see some error output about the problems.
+Requires:
+    gource http://gource.io/ 
+    bash version >= 4.x to get associate array support
 
-#         PollingInterval - defaults to 10
-#             The delay between polling cycles for fetching new commit logs
+    A folder with folders beneath it which are git repositories
 
-# Example:
+Usage:
+    gource-git-dir.sh [-p ProjectName] [-r RemoteOrigin] [-b BranchesToDisplay] [-i [PollingInterval] [-- GOURCE_OPTIONS]
+        -p ProjectName - defaults to "Base"
+            This is a name to aide gource in displaying multiple branches
+            It will also be displayed in the lower left of the window
 
-# Given the folder structure below where all of the folders under ./prpl are git repositories
-# And ./prpl is the current directory
-# And the script is run as 'gource-git-dir.sh Loop origin master,develop 10'
-# Then a beautiful display graphic of changes to the repositories will be displayed.
-# The display is fullscreen. Press <esc> to exit. See the gource wiki for shortcut keys to modify
-# The display while it is running.
+        -r RemoteOrigin - defaults to "origin"
+            This is the git remote for fetching and displaying logs from
 
-# ./prpl
-#   |-pRpl
-#   |-pRpl-CAN
-#   |-pRpl-dev-tools
-#   |-pRpl-MOST
-#   |-pRpl-rest-client
+        -b BranchesToDisplay - defaults to "master"
+            A comma-delimited list of branch names that will be used to display logs
+            Example: "master,develop"
+            It's best if all the branches listed exist in all the repos. If that is not true, 
+              it will not stop the script from gathering the logs from the branches that
+              do exist. You will see some error output about the problems.
 
-# The display will first show how the repositories evolved over time from the initial commits. When
-# it catches up to the current state, then it will poll each interval for new commits to display.
+        -i PollingInterval - defaults to 10
+            The delay between polling cycles for fetching new commit logs
 
-# Inspired by a similar display at a client site.
-# Some script ideas based on code at https://github.com/whitewhidow/gource-live
+    Pass gource options to the gource invocation by putting '--' after all the options for gource-git-dir
+    and then the gource options. gource is run with some options already set:
+        gource --title "${TITLE}" --key \
+                                --fullscreen \
+                                --hide root,usernames,filenames,mouse \
+                                --log-format custom \
+                                --file-idle-time 0 \
+                                --max-files 0
+                                
+    See the gource wiki for listings of its options.
 
+Example:
+
+Given the folder structure below where all of the folders under ./prpl are git repositories
+And ./prpl is the current directory
+And the script is run as 
+    gource-git-dir.sh -p Loop -r origin -b master,develop -i 10 -- --background-colour FFFFFF
+
+Then a beautiful display graphic of changes to the repositories will be displayed.
+The display is fullscreen. Press <esc> to exit. See the gource wiki for shortcut keys to modify
+The display while it is running.
+
+./prpl
+  |-pRpl
+  |-pRpl-CAN
+  |-pRpl-dev-tools
+  |-pRpl-MOST
+  |-pRpl-rest-client
+
+The display will first show how the repositories evolved over time from the initial commits. When
+it catches up to the current state, then it will poll each interval for new commits to display.
+
+Inspired by a similar display at a client site.
+Some script ideas based on code at https://github.com/whitewhidow/gource-live
+EOF
+
+}
 
 echoerr() 
 { 
@@ -58,12 +80,14 @@ echoerr()
 function gource_consume()
 {
     local TITLE=$1
+    shift
     gource --title "${TITLE}" --key \
                               --fullscreen \
-                              --hide usernames,filenames,mouse \
+                              --hide root,usernames,filenames,mouse \
                               --log-format custom \
                               --file-idle-time 0 \
                               --max-files 0 \
+                              $@ \
                               - <&0
 }
 
@@ -115,7 +139,7 @@ function git_supply()
                         PREFIX="$TIMESTAMP|$AUTHOR|"
                         git diff-tree -r --no-commit-id --name-status $SHA | tr '\t' '|' | while read SUFFIX
                         do
-                            echo "$PREFIX$(prepend_base_to_path ${PROJECT_BASE}/${B} ${SUFFIX})" >> $STAGE_FILE
+                            echo "$PREFIX$(prepend_base_to_path ${PROJECT_BASE}/${d}/${B} ${SUFFIX})" >> $STAGE_FILE
                         done
                     done
 
@@ -138,10 +162,32 @@ function git_supply()
     done
 }
 
-#todo: optags
-PROJECT_BASE="${1:-BASE}"
-REMOTE=${2:-"origin"}
-BRANCH=${3:-"master"}
-INTERVAL=${4:-10}
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-git_supply $PROJECT_BASE $REMOTE $BRANCH $INTERVAL | gource_consume $PROJECT_BASE
+PROJECT_BASE="BASE"
+REMOTE="origin"
+BRANCH="master"
+INTERVAL=10
+
+while getopts "hp:r:b:i:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    p)  PROJECT_BASE=$OPTARG
+        ;;
+    r)  REMOTE=$OPTARG
+        ;;
+    b)  BRANCH=$OPTARG
+        ;;
+    i)  INTERVAL=$OPTARG
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+git_supply $PROJECT_BASE $REMOTE $BRANCH $INTERVAL | gource_consume $PROJECT_BASE "$@"
