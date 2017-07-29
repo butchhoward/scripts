@@ -25,11 +25,19 @@ Usage:
             This is the git remote for fetching and displaying logs from
 
         -b BranchesToDisplay - defaults to "master"
-            A comma-delimited list of branch names that will be used to display logs
-            Example: "master,develop"
+            A comma-delimited list of branch names that will be used to display logs.
+            Example: "-b master,develop"
+
+            This option uses the same list of branches for each repository.
             It's best if all the branches listed exist in all the repos. If that is not true, 
               it will not stop the script from gathering the logs from the branches that
               do exist. You will see some error output about the problems.
+
+        -B Use all the existing branches on the remote for BranchesToDisplay
+            If this is used, '-b' is ignored
+            This option creates a different set of branches for each repository.
+            Note that the more branches there are to display the long it will take to start up.
+
 
         -i PollingInterval - defaults to 10
             The delay between polling cycles for fetching new commit logs
@@ -100,19 +108,38 @@ function prepend_base_to_path()
 
 }
 
+function git_all_branches()
+{
+    local REMOTE=$1
+    local BRANCHES=''
+
+    for b in $(git for-each-ref --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
+        if [ -n "${BRANCHES}" ]; then
+            BRANCHES="${BRANCHES},"
+        fi
+        BRANCHES="${BRANCHES}${b}"
+    done
+    echo $BRANCHES
+}
+
 function git_supply()
 {
     local PROJECT_BASE=$1
     local REMOTE=$2
     local BRANCH=$3
     local INTERVAL=$4
+    local USE_ALL_BRANCHES=$5
+    local BRANCHES=''
   
     local STAGE_FILE="/tmp/gource_staging.txt"
     rm $STAGE_FILE &>/dev/null
   
     #requires Bash 4.x - associative array using directory name as key
     declare -A SHAS=()
-    IFS=', ' read -r -a BRANCHES <<< "$BRANCH"
+
+    if [ ! USE_ALL_BRANCHES ]; then
+        IFS=', ' read -r -a BRANCHES <<< "$BRANCH"
+    fi
 
     while true
     do
@@ -123,6 +150,11 @@ function git_supply()
                 pushd $d &> /dev/null
 
                 local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
+
+                if [ USE_ALL_BRANCHES ]; then
+                    BRANCH=$(git_all_branches $REMOTE)
+                    IFS=', ' read -r -a BRANCHES <<< "$BRANCH"
+                fi
 
                 for B in "${BRANCHES[@]}"; do
                     
@@ -169,8 +201,9 @@ PROJECT_BASE="BASE"
 REMOTE="origin"
 BRANCH="master"
 INTERVAL=10
+USE_ALL_BRANCHES=false
 
-while getopts "hp:r:b:i:" opt; do
+while getopts "hp:r:b:i:B" opt; do
     case "$opt" in
     h|\?)
         show_help
@@ -182,6 +215,8 @@ while getopts "hp:r:b:i:" opt; do
         ;;
     b)  BRANCH=$OPTARG
         ;;
+    B) USE_ALL_BRANCHES=true
+        ;;
     i)  INTERVAL=$OPTARG
         ;;
     esac
@@ -190,4 +225,5 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-git_supply $PROJECT_BASE $REMOTE $BRANCH $INTERVAL | gource_consume $PROJECT_BASE "$@"
+
+git_supply $PROJECT_BASE $REMOTE $BRANCH $INTERVAL $USE_ALL_BRANCHES | gource_consume $PROJECT_BASE "$@"
