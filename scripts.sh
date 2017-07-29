@@ -1,5 +1,6 @@
 #source this script to get the useful functions
+LOCATION=${BASH_SOURCE%/*}
 
-source ~/projects/scripts/venv_tools.sh
-source ~/projects/scripts/repo_tools.sh
-source ~/projects/scripts/docker_tools.sh
+source ${LOCATION}/venv_tools.sh
+source ${LOCATION}/repo_tools.sh
+source ${LOCATION}/docker_tools.sh
