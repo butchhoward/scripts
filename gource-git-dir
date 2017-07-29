@@ -7,7 +7,7 @@ function show_help()
 cat<<EOF
 
 
-Present pretty OpenGL display of activity in git repositories.
+Pretty OpenGL display of activity in a collection of git repositories.
 
 Requires:
     gource http://gource.io/ 
@@ -16,7 +16,7 @@ Requires:
     A folder with folders beneath it which are git repositories
 
 Usage:
-    gource-git-dir.sh [-p ProjectName] [-r RemoteOrigin] [-b BranchesToDisplay] [-i [PollingInterval] [-- GOURCE_OPTIONS]
+    gource-git-dir [-p ProjectName] [-r RemoteOrigin] [-b BranchesToDisplay] [-i [PollingInterval] [-- GOURCE_OPTIONS]
         -p ProjectName - defaults to "Base"
             This is a name to aide gource in displaying multiple branches
             It will also be displayed in the lower left of the window
@@ -50,7 +50,7 @@ Example:
 Given the folder structure below where all of the folders under ./prpl are git repositories
 And ./prpl is the current directory
 And the script is run as 
-    gource-git-dir.sh -p Loop -r origin -b master,develop -i 10 -- --background-colour FFFFFF
+    gource-git-dir -p Loop -r origin -b master,develop -i 10 -- --background-colour FFFFFF
 
 Then a beautiful display graphic of changes to the repositories will be displayed.
 The display is fullscreen. Press <esc> to exit. See the gource wiki for shortcut keys to modify
