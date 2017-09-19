@@ -83,7 +83,9 @@ function repo_update_to_branch()
     git fetch --all
     git checkout ${BRANCH}
     git reset --hard origin/${BRANCH}
-    git push origin ${BRANCH}
+    if [ "$BRANCH" != "master" ]; then
+        git push origin ${BRANCH}
+    fi
 }
 
 function repo_update_to_master()
