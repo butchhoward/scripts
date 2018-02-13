@@ -83,10 +83,7 @@ function repo_update_to_branch()
     git fetch --all
     git checkout ${BRANCH}
     git reset --hard origin/${BRANCH}
-    if [ "$BRANCH" != "master" ]; then
-        git push origin ${BRANCH}
-    fi
-}
+ }
 
 function repo_update_to_master()
 {
@@ -98,6 +95,13 @@ function repo_update_all_to_master()
     repo_do_it_to_all repo_update_to_master
 }
 
+function repo_update_all_to_branch()
+{
+    local BRANCH=${1:-"master"}
+
+    repo_do_it_to_all repo_update_to_branch "${BRANCH}"
+}
+
 function repo_status_all()
 {
     repo_do_it_to_all "git status"
@@ -105,7 +109,8 @@ function repo_status_all()
 
 function repo_clean_fdx_all()
 {
-    repo_do_it_to_all "git clean -fdx"
+    local EXTRA_ARGS=${@:-"--exclude=.vscode"}
+    repo_do_it_to_all "git clean -fdx ${EXTRA_ARGS}"
 }
 
 function repo_prune_remote_branches()
