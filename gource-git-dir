@@ -43,7 +43,7 @@ Usage:
             undeleted branches.
 
         -i PollingInterval - defaults to 10
-            The delay between polling cycles for fetching new commit logs
+            The delay in seconds between polling cycles for fetching new commit logs
 
     Pass gource options to the gource invocation by putting '--' after all the options for gource-git-dir
     and then the gource options. gource is run with some options already set:
@@ -254,6 +254,5 @@ done
 
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
-
 
 git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" | gource_consume "${PROJECT_BASE}" "$@"
