@@ -107,9 +107,15 @@ function repo_status_all()
     repo_do_it_to_all "git status"
 }
 
+function repo_clean_fdx()
+{
+    local EXTRA_ARGS=${@:-"--exclude=.vscode --exclude=.idea"}
+    git clean -fdx ${EXTRA_ARGS}
+}
+
 function repo_clean_fdx_all()
 {
-    local EXTRA_ARGS=${@:-"--exclude=.vscode"}
+    local EXTRA_ARGS=${@:-"--exclude=.vscode --exclude=.idea"}
     repo_do_it_to_all "git clean -fdx ${EXTRA_ARGS}"
 }
 
