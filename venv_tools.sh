@@ -56,3 +56,13 @@ function venv_pip_reqiurements()
     pip install --upgrade -r requirements.txt
 }
 
+function venv_rebuild()
+{
+    venv_deactivate;
+    venv_create;
+    venv_activate;
+    venv_pip_upgrade;
+    if [ -a ./requirements.txt ]; then
+        venv_pip_reqiurements;
+    fi
+}
