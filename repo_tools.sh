@@ -1,6 +1,11 @@
 #source this script to get the useful functions
 
 
+function repo_base_dir()
+{
+    echo $(git rev-parse --show-toplevel 2>/dev/null)
+}
+
 # The do_it functions apply everything on the command-line as a command in each git folder below the current one
 # I have not figured out exaclty how to execute complex things in that command
 # So:
@@ -81,8 +86,12 @@ function repo_update_to_branch()
     local BRANCH=${1:-"master"}
 
     git fetch --all
-    git checkout ${BRANCH}
-    git reset --hard origin/${BRANCH}
+    if ! git show-ref --quiet --verify -- "refs/remotes/origin/${BRANCH}" ; then
+        echo "'origin/${BRANCH}' does not exist. Nothing to do."
+    else
+        git checkout ${BRANCH}
+        git reset --hard origin/${BRANCH}
+    fi
  }
 
 function repo_update_to_master()
@@ -131,6 +140,11 @@ function repo_prune_remote_branches()
 function repo_delete_all_local_branches()
 {
     local MASTER_BRANCH=${1:-"master"}
+
+    if ! git show-ref --quiet --verify -- "refs/heads/${MASTER_BRANCH}" ; then
+        echo "'${MASTER_BRANCH}' does not exist. It is not safe to delete all the things."
+        return 1
+    fi
 
     git checkout "${MASTER_BRANCH}"
     for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
