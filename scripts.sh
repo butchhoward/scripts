@@ -1,5 +1,5 @@
 #source this script to get the useful functions
-LOCATION=${BASH_SOURCE%/*}
+LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source ${LOCATION}/venv_tools.sh
 source ${LOCATION}/repo_tools.sh
