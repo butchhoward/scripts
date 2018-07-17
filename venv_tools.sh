@@ -40,7 +40,7 @@ function venv_create()
         rm -rf "${location}"
     fi
     if [ ! -a "${location}" ]; then
-        ~/.pyenv/versions/3.5.1/bin/pyvenv "${location}"
+        ~/.pyenv/versions/3.6.0/bin/python -m venv "${location}"
     fi
 }
 
