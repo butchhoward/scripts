@@ -1,9 +1,10 @@
+#!/usr/bin/env bash
 #source this script to get the useful functions
 
 
 function repo_base_dir()
 {
-    echo $(git rev-parse --show-toplevel 2>/dev/null)
+    git rev-parse --show-toplevel 2>/dev/null
 }
 
 # The do_it functions apply everything on the command-line as a command in each git folder below the current one
@@ -24,35 +25,35 @@ function repo_base_dir()
 
 function repo_do_it_to_all()
 {
-    for d in `ls -d *`;do 
-        if [ -d $d/.git ]; then 
-            pushd $d &> /dev/null
+    for d in ./*;do 
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+            pushd "$d" &> /dev/null || exit 1
             echo ""
-            echo "====$(pwd)===>[$@]"
-            $@
-            popd &> /dev/null
+            echo "====$(pwd)===>[$*]"
+            "$@"
+            popd &> /dev/null || exit 1
         fi;
     done
 }
 
 function repo_do_it_to_all_quietly()
 {
-    for d in `ls -d *`;do 
-        if [ -d $d/.git ]; then 
-            pushd $d &> /dev/null
-            $@
-            popd &> /dev/null
+    for d in ./*;do 
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+            pushd "$d" &> /dev/null || exit 1
+            "$@"
+            popd &> /dev/null || exit 1
         fi;
     done
 }
 
 function repo_do_it_to_all_very_quietly()
 {
-    for d in `ls -d *`;do 
-        if [ -d $d/.git ]; then 
-            pushd $d &> /dev/null
-            $@ &> /dev/null
-            popd &> /dev/null
+    for d in ./*;do 
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+            pushd "$d" &> /dev/null || exit 1
+            "$@" &> /dev/null
+            popd &> /dev/null || exit 1
         fi;
     done
 }
@@ -97,8 +98,8 @@ function repo_update_to_branch()
     if ! git show-ref --quiet --verify -- "refs/remotes/origin/${BRANCH}" ; then
         echo "'origin/${BRANCH}' does not exist. Nothing to do."
     else
-        git checkout ${BRANCH}
-        git reset --hard origin/${BRANCH}
+        git checkout "${BRANCH}"
+        git reset --hard origin/"${BRANCH}"
     fi
  }
 
@@ -126,20 +127,30 @@ function repo_status_all()
 
 function repo_clean_fdx()
 {
-    local EXTRA_ARGS=${@:-"--exclude=.vscode --exclude=.idea"}
-    git clean -fdx ${EXTRA_ARGS}
+    local -a EXTRA_ARGS
+    if [[ $# -eq 0 ]];then
+        EXTRA_ARGS=("--exclude=.vscode" "--exclude=.idea")
+    else
+        EXTRA_ARGS=("$@")
+    fi
+    git clean -fdx "${EXTRA_ARGS[@]}"
 }
 
 function repo_clean_fdx_all()
 {
-    local EXTRA_ARGS=${@:-"--exclude=.vscode --exclude=.idea"}
-    repo_do_it_to_all "git clean -fdx ${EXTRA_ARGS}"
+    local -a EXTRA_ARGS
+    if [[ $# -eq 0 ]];then
+        EXTRA_ARGS=("--exclude=.vscode" "--exclude=.idea")
+    else
+        EXTRA_ARGS=("$@")
+    fi
+    repo_do_it_to_all "git clean -fdx ${EXTRA_ARGS[*]}"
 }
 
 function repo_prune_remote_branches()
 {
     for remote_name in $(git remote); do 
-        git remote prune $remote_name
+        git remote prune "$remote_name"
     done
 }
 
