@@ -53,16 +53,22 @@ function venv_activate()
 
 function venv_pip_reqiurements()
 {
-    pip install --upgrade -r requirements.txt
+    local requirements_file=${1:-"requirements.txt"}
+    if [ -a "${requirements_file}" ]; then
+        pip install --upgrade -r "${requirements_file}"
+    else
+        echo "Could not pip the requirments file: '${requirements_file}'"
+    fi
 }
 
 function venv_rebuild()
 {
-    venv_deactivate;
-    venv_create;
-    venv_activate;
-    venv_pip_upgrade;
-    if [ -a ./requirements.txt ]; then
-        venv_pip_reqiurements;
-    fi
+    local requirements_folder=${1:-'.'}
+    local requirements_file="${requirements_folder/requirements.txt}"
+    
+    venv_deactivate
+    venv_create
+    venv_activate
+    venv_pip_upgrade
+    venv_pip_reqiurements "${requirements_file}"
 }
