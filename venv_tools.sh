@@ -1,8 +1,10 @@
+#!/usr/bin/env bash
 #source this script to get the useful functions
 
 function venv_location()
 {
-    local location=$(git rev-parse --show-toplevel 2>/dev/null)
+    local location
+    location="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [ -z "${location}" ]; then
         location=".venv"
     else
@@ -23,13 +25,15 @@ function venv_deactivate()
 
 function venv_is_a_venv()
 {
-    local location=${1:?"venv folder was not specified"}
+    local location
+    location="${1:?"venv folder was not specified"}"
     if [[ -d "${location}" && -e "${location}/bin/activate" ]]; then
         return 0
     fi
     return 1
 }
 
+# shellcheck disable=SC2120
 function venv_create()
 {
     venv_deactivate
@@ -44,6 +48,7 @@ function venv_create()
     fi
 }
 
+# shellcheck disable=SC2120
 function venv_activate()
 {
     venv_deactivate
@@ -67,8 +72,8 @@ function venv_rebuild()
     local requirements_file="${requirements_folder/requirements.txt}"
     
     venv_deactivate
-    venv_create
-    venv_activate
+    venv_create ""
+    venv_activate ""
     venv_pip_upgrade
     venv_pip_reqiurements "${requirements_file}"
 }
