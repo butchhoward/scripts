@@ -59,6 +59,14 @@ function repo_do_it_to_all_very_quietly()
 
 repo_is_clean() 
 {
+
+    #untrack files (and modified and deleted. might be redundant of the other checks)
+    local count
+    count=$(( $(git ls-files --other --modified  --deleted --directory --exclude-standard | wc -l) ))
+    if [[ count -ne 0 ]]; then
+        return 3
+    fi
+
     git update-index -q --ignore-submodules --refresh
 
     # unstaged changes in the working tree
