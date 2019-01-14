@@ -19,6 +19,25 @@
 # If you are going to use any Python 2.x versions, you must have installed virtualenv tools at the global level
 #   pip install virtualenv virtualenvwrapper
 
+function venv_help()
+{
+    echo ""
+    echo "venv_rebuild requirements_folder version location"
+    echo "      folder defaults to current"
+    echo "      version defaults to 3.6.0"
+    echo "      venv location defaults to computed (../.venv/<git repo name>)"
+    echo ""
+    echo ""
+    echo "venv_activate"
+    echo ""
+    echo "venv_deactivate"
+    echo ""
+    echo "venv_pip_requirements requirements_file"
+    echo "      file defaults to ./requirements.txt"
+    echo ""
+    echo "venv_pip_upgrade"
+}
+    
 
 function venv_location()
 {

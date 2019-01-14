@@ -122,7 +122,7 @@ function repo_update_all_to_branch()
 
 function repo_status_all()
 {
-    repo_do_it_to_all "git status"
+    repo_do_it_to_all git status
 }
 
 function repo_clean_fdx()
