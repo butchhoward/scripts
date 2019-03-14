@@ -19,12 +19,17 @@
 # If you are going to use any Python 2.x versions, you must have installed virtualenv tools at the global level
 #   pip install virtualenv virtualenvwrapper
 
+venv_def_py()
+{
+    pyenv install --list | sed 's/^  //' | grep '^\d' | grep --invert-match 'dev\|a\|b' | tail -1
+}
+
 function venv_help()
 {
     echo ""
     echo "venv_rebuild requirements_folder version location"
     echo "      folder defaults to current"
-    echo "      version defaults to 3.6.0"
+    echo "      version defaults to '$(venv_def_py)'"
     echo "      venv location defaults to computed (../.venv/<git repo name>)"
     echo ""
     echo ""
@@ -93,7 +98,7 @@ function venv_remove()
 # shellcheck disable=SC2120
 function venv_create()
 {
-    local version="${1:-3.6.0}"
+    local version="${1:-$(venv_def_py)}"
     local location=${2:-$(venv_location)}
 
     venv_deactivate
@@ -103,7 +108,7 @@ function venv_create()
         # shellcheck disable=SC2071
         if [[ "${version}" < "3" ]]; then
             # use virtualenvwrapper tools for the prehistoric pythons
-            echo "using virtualenvwrapper for python 2.x to create environment '${location##*/}'"
+            echo "using virtualenvwrapper for python 2.x to create environment '${location##*/}' because version='${version}'"
             # shellcheck disable=SC1094
             source /usr/local/bin/virtualenvwrapper.sh
             mkvirtualenv -p ~/.pyenv/versions/${version}/bin/python "${location##*/}"
@@ -139,7 +144,7 @@ function venv_pip_requirements()
 function venv_rebuild()
 {
     local requirements_folder=${1:-'.'}
-    local version="${2:-3.6.0}"
+    local version="${2:-$(venv_def_py)}"
     local location="${3:-$(venv_location)}"
 
     local requirements_file="${requirements_folder}/requirements.txt"
