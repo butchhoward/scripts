@@ -49,11 +49,10 @@ function venv_location()
     local location
     location="$(git rev-parse --show-toplevel 2>/dev/null)"
     if [ -z "${location}" ]; then
-        location=".venv"
-    else
-        location="${location}/../.venv/${location##*/}"
+        location="$(pwd)"
     fi
-    echo ${location}
+    location="${location}/../.venv/${location##*/}"
+    echo "${location}"
 }
 
 function venv_pip_upgrade()
@@ -113,7 +112,7 @@ function venv_create()
             source /usr/local/bin/virtualenvwrapper.sh
             mkvirtualenv -p ~/.pyenv/versions/${version}/bin/python "${location##*/}"
         else
-            ~/.pyenv/versions/${version}/bin/python -m venv "${location}"
+            ~/.pyenv/versions/"${version}"/bin/python -m venv "${location}"
         fi
     fi
 }
