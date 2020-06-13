@@ -27,4 +27,26 @@ function path_remove ()
 { 
     # shellcheck disable=SC2155
     export PATH=$(echo -n "$PATH" | awk -v RS=: -v ORS=: '$0 != "'"$1"'"' | sed 's/:$//')
+# top display for process names matching grep pattern '$1'
+function toppgrep()
+{
+    top -pid $(pgrep "$1" | tr "\\n" "," | sed 's/,$//')
+}
+
+function fuckingpinger()
+{
+    ping -nqoc 1 $1 &> /dev/null
+}
+
+function fuckingping()
+{
+    a=(10.10.1.1 73.184.0.28 1.1.1.1 8.8.8.8)
+
+    while true; do 
+        for ip in "${a[@]}"; do
+            printf "%s" "."
+            fuckingpinger "${ip}" || echo "fucking can't ping ${ip}"
+        done
+        sleep 3
+    done
 }
