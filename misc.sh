@@ -40,15 +40,19 @@ function fuckingpinger()
     ping -nqoc 1 $1 &> /dev/null
 }
 
+function fuckingpingX()
+{
+    while true; do 
+        for ip in "$@"; do
+            printf "%s" "."
+            fuckingpinger "${ip}" || printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
+        done
+        printf "%s" "+"
+        sleep 5
+    done
+}
+
 function fuckingping()
 {
-    a=(10.10.1.1 73.184.0.28 1.1.1.1 8.8.8.8)
-
-    while true; do 
-        for ip in "${a[@]}"; do
-            printf "%s" "."
-            fuckingpinger "${ip}" || echo "fucking can't ping ${ip}"
-        done
-        sleep 3
-    done
+    fuckingpingX 10.10.1.1 73.184.0.28 1.1.1.1 8.8.8.8
 }
