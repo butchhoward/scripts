@@ -65,5 +65,5 @@ function fuckingpingX()
 
 function fuckingping()
 {
-    fuckingpingX 10.10.1.1 73.184.0.28 1.1.1.1 8.8.8.8
+    fuckingpingX 10.10.1.1 73.184.0.28 208.67.222.222 8.8.8.8 1.1.1.1 
 }
