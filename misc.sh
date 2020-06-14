@@ -42,12 +42,23 @@ function fuckingpinger()
 
 function fuckingpingX()
 {
+    local failed_count=1
+
     while true; do 
         for ip in "$@"; do
-            printf "%s" "."
-            fuckingpinger "${ip}" || printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
+            if fuckingpinger "${ip}"; then
+                failed_count=0
+                printf "%s" "."
+            else
+                if [[ failed_count -eq 0 ]]; then 
+                    printf "\n";
+                fi
+                printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
+                ((++failed_count))
+            fi
         done
         printf "%s" "+"
+        failed_count=0
         sleep 5
     done
 }
