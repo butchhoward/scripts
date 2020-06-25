@@ -10,7 +10,7 @@ function repo_base_dir()
 # The do_it functions apply everything on the command-line as a command in each git folder below the current one
 # I have not figured out exaclty how to execute complex things in that command
 # So:
-#       repo_do_it_to_all git checkout master
+#       repo_do_it_to_all git checkout trunk
 #
 # works, but something more complicated will not:
 #       repo_do_it_to_all_quietly  if ! repo_is_clean; then git status; fi;
@@ -92,7 +92,7 @@ function repo_fetch_all()
 
 function repo_update_to_branch()
 {
-    local BRANCH=${1:-"master"}
+    local BRANCH=${1:-"trunk"}
 
     git fetch --all
     if ! git show-ref --quiet --verify -- "refs/remotes/origin/${BRANCH}" ; then
@@ -103,19 +103,19 @@ function repo_update_to_branch()
     fi
  }
 
-function repo_update_to_master()
+function repo_update_to_trunk()
 {
-    repo_update_to_branch master
+    repo_update_to_branch trunk
 }
 
-function repo_update_all_to_master()
+function repo_update_all_to_trunk()
 {
-    repo_do_it_to_all repo_update_to_master
+    repo_do_it_to_all repo_update_to_trunk
 }
 
 function repo_update_all_to_branch()
 {
-    local BRANCH=${1:-"master"}
+    local BRANCH=${1:-"trunk"}
 
     repo_do_it_to_all repo_update_to_branch "${BRANCH}"
 }
@@ -158,16 +158,16 @@ function repo_prune_remote_branches()
 # It does not remove commits, so you can probably get back to the code (at least until a purge happens)
 function repo_delete_all_local_branches()
 {
-    local MASTER_BRANCH=${1:-"master"}
+    local TRUNK_BRANCH=${1:-"trunk"}
 
-    if ! git show-ref --quiet --verify -- "refs/heads/${MASTER_BRANCH}" ; then
-        echo "'${MASTER_BRANCH}' does not exist. It is not safe to delete all the things."
+    if ! git show-ref --quiet --verify -- "refs/heads/${TRUNK_BRANCH}" ; then
+        echo "'${TRUNK_BRANCH}' does not exist. It is not safe to delete all the things."
         return 1
     fi
 
-    git checkout "${MASTER_BRANCH}"
+    git checkout "${TRUNK_BRANCH}"
     for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-        if [ "$branch" != "${MASTER_BRANCH}" ]; then
+        if [ "$branch" != "${TRUNK_BRANCH}" ]; then
             git branch -D "$branch"
         fi
     done
