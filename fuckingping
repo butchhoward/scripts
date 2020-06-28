@@ -12,20 +12,23 @@ Probably only works on MacOS
 
 
 Usage:
-    fuckingping [-h?qdx] [-v "voice"] [-- ip ip ip ...]
+    fuckingping [-h?qdx] [-v "voice"] -V "phrase" [-- ip ip ip ...]
         -h, -? - Show usage help
 
-        -q Quiet -- does not speak status. default is to speak
+        -q quiet -- does not speak status. default is to speak
 
-        -d Direct - use list of IP addresses give after '--'
+        -d direct - use list of IP addresses give after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
 
-        -x eXternal - use default list of IP address, but only the external ones
+        -x eternal - use default list of IP address, but only the external ones
             This is useful when not using the house internet (i.e. a MiFi or some other)
 
-        -v Voice - use the "say" command voice name specified
+        -v voice - use the "say" command voice name specified
             The default is "Fiona"
+
+        -V define an alternate prefix, default is "Fucking"
+            to turn off the Vulgarity use -V ""
 
         -- All arguments following are passed to processing commands
             This really only applies to "-d" and passes the list of IP addresses along
@@ -57,10 +60,17 @@ function speak_internet_up()
     fi
 }
 
-function speak_internet_down()
+function speak_ping_fail()
 {
     if ! $QUIETLY; then
-        say --voice="${VOICE}" "Fucking can't ping ${1}"
+        say --voice="${VOICE}" "${VULGAR_PREFIX} can't ping ${1}"
+    fi
+}
+
+function speak_internet_problem()
+{
+    if ! $QUIETLY; then
+        say --voice="${VOICE}" "${VULGAR_PREFIX} $1 of $2 pings failed."
     fi
 }
 
@@ -71,51 +81,94 @@ function current_wifi_adapter()
 
 function the_pinger()
 {
-    ping -nqoc 1 $1 &> /dev/null
+    ping -nqoc 1 "$1" &> /dev/null
 }
 
-# function the_list_pinger()
-# {
-#     for ip in "$@"; do
-#         if ! the_pinger "${ip}"; then
-#         fi
-#     done
-# }
+function the_list_pinger()
+{
+    local failed_count=0
+
+    for ip_value in "$@"; do
+        local ip_name="${ip_value%%:*}"
+        local ip="${ip_value##*:}"
+
+        if ! the_pinger "${ip}"; then
+            printf "%s " "${ip_name}"
+            ((++failed_count))
+        fi
+    done
+
+    return "$failed_count"
+}
+
+# this was an attempt to have it attempt all pings and return a list of failed
+# i did not end up using this because a failed ping takes consderable time to fail
+# if many were failing, it could be quite a long time before it would be reported (minutes, not hours, but...)
+function fuckingping_listX()
+{
+    echo "Begin ping tests for: " "$@"
+    current_wifi_adapter
+    date -jR
+
+    local internet_down=false
+
+    while true; do 
+        local error
+        error="$(the_list_pinger "$@")"
+        if ! error="$(the_list_pinger "$@")"; then
+            printf "${VULGAR_PREFIX} can't ping %s %s\n" "${error}" "$(date -jR)"
+            speak_internet_down "${error}"
+            internet_down=true
+        else
+            if $internet_down; then 
+                speak_internet_up
+                internet_down=false
+            fi
+        fi
+    done
+
+}
 
 function fuckingping_list()
 {
     echo "Begin ping tests for: " "$@"
-    echo "$(current_wifi_adapter)"
-    echo "$(date -jR)"
+    current_wifi_adapter
+    date -jR
 
-    local failed_count=1
+    local failed_count=0
+    local internet_down=false
+
 
     while true; do 
         for ip_value in "$@"; do
-            ip_name="${ip_value%%:*}"
-            ip="${ip_value##*:}"
+            local ip_name="${ip_value%%:*}"
+            local ip="${ip_value##*:}"
 
             if the_pinger "${ip}"; then
-                if [[ failed_count -ne 0 ]]; then 
-                    speak_internet_up
-                fi
-
-                failed_count=0
                 printf "%s" "."
             else
                 if [[ failed_count -eq 0 ]]; then 
                     printf "\n";
                 fi
 
-                printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
+                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
                 ((++failed_count))
-
-                if [[ failed_count -eq 1 ]]; then 
-                    speak_internet_down "${ip_name}"
-                fi
+                speak_ping_fail "${ip_name}"
             fi
         done
+
         printf "%s" "+"
+
+        if [[ failed_count -eq 0 ]]; then 
+            if $internet_down; then 
+                speak_internet_up
+                internet_down=false
+            fi
+        else
+            internet_down=true
+            speak_internet_problem "${failed_count}" "$#"
+        fi
+        
         failed_count=0
         sleep 10
     done
@@ -123,7 +176,7 @@ function fuckingping_list()
 
 function fuckingping_default()
 {
-    fuckingping_list  router:10.10.1.1 "cable modem:73.184.0.28" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    fuckingping_list  "router:10.10.1.1" "cable modem:73.184.0.28" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
 
 }
 
@@ -138,8 +191,9 @@ OPTIND=1
 QUIETLY=false
 VOICE="Fiona"
 COMMAND="fuckingping_default"
+VULGAR_PREFIX="Fucking"
 
-while getopts "hqdxv:" opt; do
+while getopts "hqdxV:v:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -147,11 +201,13 @@ while getopts "hqdxv:" opt; do
         ;;
     q)  QUIETLY=true
         ;;
-    v)  VOICE=${OPTARG}
+    v)  VOICE="${OPTARG}"
         ;;
     d)  COMMAND="fuckingping_list"
         ;;
     x)  COMMAND="fuckingping_default_external"
+        ;;
+    V)  VULGAR_PREFIX="${OPTARG}"
         ;;
     esac
 done
