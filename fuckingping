@@ -129,6 +129,48 @@ function fuckingping_listX()
 
 }
 
+function ping_the_list()
+{
+    local failed_count=0
+
+    for ip_value in "$@"; do
+        local ip_name="${ip_value%%:*}"
+        local ip="${ip_value##*:}"
+
+        if the_pinger "${ip}"; then
+            printf "%s" "."
+        else
+            if [[ failed_count -eq 0 ]]; then 
+                printf "\n";
+            fi
+
+            printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
+            ((++failed_count))
+            speak_ping_fail "${ip_name}"
+        fi
+    done
+
+    return "${failed_count}"
+}
+
+function report_failed_internet()
+{
+    local failed_count=$1
+    local internet_down=$2
+
+    if [[ failed_count -eq 0 ]]; then 
+        if $internet_down; then 
+            speak_internet_up
+            internet_down=false
+        fi
+    else
+        internet_down=true
+        speak_internet_problem "${failed_count}" "$#"
+    fi
+
+    echo "${internet_down}"
+}
+
 function fuckingping_list()
 {
     echo "Begin ping tests for: " "$@"
@@ -138,38 +180,14 @@ function fuckingping_list()
     local failed_count=0
     local internet_down=false
 
-
     while true; do 
-        for ip_value in "$@"; do
-            local ip_name="${ip_value%%:*}"
-            local ip="${ip_value##*:}"
-
-            if the_pinger "${ip}"; then
-                printf "%s" "."
-            else
-                if [[ failed_count -eq 0 ]]; then 
-                    printf "\n";
-                fi
-
-                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
-                ((++failed_count))
-                speak_ping_fail "${ip_name}"
-            fi
-        done
+        ping_the_list "$@"
+        failed_count=$?
 
         printf "%s" "+"
 
-        if [[ failed_count -eq 0 ]]; then 
-            if $internet_down; then 
-                speak_internet_up
-                internet_down=false
-            fi
-        else
-            internet_down=true
-            speak_internet_problem "${failed_count}" "$#"
-        fi
-        
-        failed_count=0
+        internet_down=$(report_failed_internet "${failed_count}" "${internet_down}")
+
         sleep 10
     done
 }
