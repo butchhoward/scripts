@@ -35,35 +35,10 @@ function toppgrep()
     top -pid $(pgrep "$1" | tr "\\n" "," | sed 's/,$//')
 }
 
-function fuckingpinger()
-{
-    ping -nqoc 1 $1 &> /dev/null
-}
 
-function fuckingpingX()
-{
-    local failed_count=1
+# Wifi Checker tools
 
-    while true; do 
-        for ip in "$@"; do
-            if fuckingpinger "${ip}"; then
-                failed_count=0
-                printf "%s" "."
-            else
-                if [[ failed_count -eq 0 ]]; then 
-                    printf "\n";
-                fi
-                printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
-                ((++failed_count))
-            fi
-        done
-        printf "%s" "+"
-        failed_count=0
-        sleep 5
-    done
-}
-
-function fuckingping()
+function current_wifi_adapter()
 {
-    fuckingpingX 10.10.1.1 73.184.0.28 208.67.222.222 8.8.8.8 1.1.1.1 
+    networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
 }

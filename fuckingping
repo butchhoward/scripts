@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+function show_help()
+{
+
+cat<<EOF
+
+
+Fuckingping some IP addresses to check Wifi connectivity
+
+Probably only works on MacOS
+
+
+Usage:
+    fuckingping [-h?qdx] [-v "voice"] [-- ip ip ip ...]
+        -h, -? - Show usage help
+
+        -q Quiet -- does not speak status. default is to speak
+
+        -d Direct - use list of IP addresses give after '--'
+            The default is to use a preset list of IP addresses that include local router
+            and several public DNS servers
+
+        -x eXternal - use default list of IP address, but only the external ones
+            This is useful when not using the house internet (i.e. a MiFi or some other)
+
+        -v Voice - use the "say" command voice name specified
+            The default is "Fiona"
+
+        -- All arguments following are passed to processing commands
+            This really only applies to "-d" and passes the list of IP addresses along
+
+            The IP list is formatted with an identifying string a colon separate and the dotted-quad IP
+            If the identifier is not given it is ignored and Fiona will speak the IP directly.
+
+            router:10.10.1.1 "cable modem":73.184.0.28 "xfinity DNS":75.75.75.75 openDNS:208.67.222.222 GoogleDNS:8.8.8.8 "Cloudflare DNS"1.1.1.1
+
+
+Examples:
+
+    fuckingping
+
+    fuckingping -q
+
+    fuckingping -x
+
+    fuckingping -d -- 1.1.1.1 8.8.8.8
+
+EOF
+
+}
+
+function speak_internet_up()
+{
+    if ! $QUIETLY; then
+        say --voice="${VOICE}" "Internet is back up"
+    fi
+}
+
+function speak_internet_down()
+{
+    if ! $QUIETLY; then
+        say --voice="${VOICE}" "Fucking can't ping ${1}"
+    fi
+}
+
+function current_wifi_adapter()
+{
+    networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
+}
+
+function the_pinger()
+{
+    ping -nqoc 1 $1 &> /dev/null
+}
+
+# function the_list_pinger()
+# {
+#     for ip in "$@"; do
+#         if ! the_pinger "${ip}"; then
+#         fi
+#     done
+# }
+
+function fuckingping_list()
+{
+    echo "Begin ping tests for: " "$@"
+    echo "$(current_wifi_adapter)"
+    echo "$(date -jR)"
+
+    local failed_count=1
+
+    while true; do 
+        for ip_value in "$@"; do
+            ip_name="${ip_value%%:*}"
+            ip="${ip_value##*:}"
+
+            if the_pinger "${ip}"; then
+                if [[ failed_count -ne 0 ]]; then 
+                    speak_internet_up
+                fi
+
+                failed_count=0
+                printf "%s" "."
+            else
+                if [[ failed_count -eq 0 ]]; then 
+                    printf "\n";
+                fi
+
+                printf "fucking can't ping %s %s\n" "${ip}" "$(date -jR)"
+                ((++failed_count))
+
+                if [[ failed_count -eq 1 ]]; then 
+                    speak_internet_down "${ip_name}"
+                fi
+            fi
+        done
+        printf "%s" "+"
+        failed_count=0
+        sleep 10
+    done
+}
+
+function fuckingping_default()
+{
+    fuckingping_list  router:10.10.1.1 "cable modem:73.184.0.28" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+
+}
+
+function fuckingping_default_external()
+{
+    fuckingping_list "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS1.1.1.1"
+}
+
+
+OPTIND=1
+
+QUIETLY=false
+VOICE="Fiona"
+COMMAND="fuckingping_default"
+
+while getopts "hqdxv:" opt; do
+    case "${opt}" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    q)  QUIETLY=true
+        ;;
+    v)  VOICE=${OPTARG}
+        ;;
+    d)  COMMAND="fuckingping_list"
+        ;;
+    x)  COMMAND="fuckingping_default_external"
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+
+"${COMMAND}" "$@"
