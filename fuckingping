@@ -12,7 +12,7 @@ Probably only works on MacOS
 
 
 Usage:
-    fuckingping [-h?qdx] [-v "voice"] -V "phrase" [-- ip ip ip ...]
+    fuckingping [-h?qdx] [-v "voice"] [-V "phrase"] [-w list_delay] [-W ping_wait] [-- ip ip ip ...]
         -h, -? - Show usage help
 
         -q quiet -- does not speak status. default is to speak
@@ -29,6 +29,11 @@ Usage:
 
         -V define an alternate prefix, default is "Fucking"
             to turn off the Vulgarity use -V ""
+
+        -w list delay seconds, default 10 seconds
+            delay between iterations of checking the entire list
+
+        -W ping waittime for packet response in milliseconds (same as the -W on the macos ping command)
 
         -- All arguments following are passed to processing commands
             This really only applies to "-d" and passes the list of IP addresses along
@@ -81,7 +86,9 @@ function current_wifi_adapter()
 
 function the_pinger()
 {
-    ping -nqoc 1 "$1" &> /dev/null
+    local ping_wait="${PING_WAIT:+"-W ${PING_WAIT}"}"
+    #shellcheck disable=SC2086
+    ping -nqo ${ping_wait} -c 1 "$1" &> /dev/null
 }
 
 function the_list_pinger()
@@ -188,7 +195,7 @@ function fuckingping_list()
 
         internet_down=$(report_failed_internet "${failed_count}" "${internet_down}")
 
-        sleep 10
+        sleep "${LIST_DELAY}"
     done
 }
 
@@ -209,9 +216,10 @@ OPTIND=1
 QUIETLY=false
 VOICE="Fiona"
 COMMAND="fuckingping_default"
-VULGAR_PREFIX="Fucking"
+LIST_DELAY=10
+PING_WAIT=
 
-while getopts "hqdxV:v:" opt; do
+while getopts "hqdxV:v:w:W:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -226,6 +234,10 @@ while getopts "hqdxV:v:" opt; do
     x)  COMMAND="fuckingping_default_external"
         ;;
     V)  VULGAR_PREFIX="${OPTARG}"
+        ;;
+    w)  LIST_DELAY="${OPTARG}"
+        ;;
+    W)  PING_WAIT="${OPTARG}"
         ;;
     esac
 done
