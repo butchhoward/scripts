@@ -163,7 +163,8 @@ function ping_the_list()
 function report_failed_internet()
 {
     local failed_count=$1
-    local internet_down=$2
+    local total_count=$2
+    local internet_down=$3
 
     if [[ failed_count -eq 0 ]]; then 
         if $internet_down; then 
@@ -172,7 +173,7 @@ function report_failed_internet()
         fi
     else
         internet_down=true
-        speak_internet_problem "${failed_count}" "$#"
+        speak_internet_problem "${failed_count}" "${total_count}"
     fi
 
     echo "${internet_down}"
@@ -193,7 +194,7 @@ function fuckingping_list()
 
         printf "%s" "+"
 
-        internet_down=$(report_failed_internet "${failed_count}" "${internet_down}")
+        internet_down=$(report_failed_internet "${failed_count}" "$#" "${internet_down}")
 
         sleep "${LIST_DELAY}"
     done
@@ -218,6 +219,7 @@ VOICE="Fiona"
 COMMAND="fuckingping_default"
 LIST_DELAY=10
 PING_WAIT=
+VULGAR_PREFIX="Fucking"
 
 while getopts "hqdxV:v:w:W:" opt; do
     case "${opt}" in
