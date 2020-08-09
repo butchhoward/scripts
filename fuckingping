@@ -32,11 +32,13 @@ Usage:
             When -x is used, the default value is zero.
             When the default list is used, the default value is 2 (house router and cable modem).
 
-        -v voice - use the "say" command voice name specified
-            The default is "Fiona"
+        -v voice - use the "say" command voice name(s) specified
+            The default is "Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
+            If a comma-delimited string of names is used, the errors will cycle through the voices.
+            
 
-        -V define an alternate prefix, default is "Fucking"
-            to turn off the Vulgarity use -V ""
+        -F define an alternate prefix, default is "Fucking"
+            to turn off the Vulgarity use -F ""
 
         -w list delay seconds, default 10 seconds
             delay between iterations of checking the entire list
@@ -71,22 +73,27 @@ EOF
 
 function speak_internet_up()
 {
-    if ! $QUIETLY; then
-        say --voice="${VOICE}" "Internet is back up"
+    if ! ${QUIETLY}; then
+        say --voice="${VOICES[0]}" "Internet is back up"
     fi
 }
 
 function speak_ping_fail()
 {
-    if ! $QUIETLY; then
-        say --voice="${VOICE}" "${VULGAR_PREFIX} can't ping ${1}"
+    if ! ${QUIETLY}; then
+        say --voice="${VOICES[${CURRENT_VOICE}]}" "${VULGAR_PREFIX} can't ping ${1}"
+        ((++CURRENT_VOICE))
+        if [[ "${CURRENT_VOICE}" -ge "${#VOICES[@]}" ]]; then
+            CURRENT_VOICE=0
+        fi
+
     fi
 }
 
 function speak_internet_problem()
 {
-    if ! $QUIETLY; then
-        say --voice="${VOICE}" "${VULGAR_PREFIX} $1 of $2 pings failed."
+    if ! ${QUIETLY}; then
+        say --voice="${VOICES[0]}" "${VULGAR_PREFIX} $1 of $2 pings failed."
     fi
 }
 
@@ -114,7 +121,7 @@ function ping_the_list()
         if the_pinger "${ip}"; then
             printf "%s" "."
         else
-            if [[ failed_count -eq 0 ]]; then 
+            if [[ ${failed_count} -eq 0 ]]; then 
                 printf "\n";
             fi
 
@@ -122,10 +129,10 @@ function ping_the_list()
             ((++failed_count))
             speak_ping_fail "${ip_name}"
 
-            if [[ ip_index -lt CRITICAL_IPS ]]; then
+            ((++ip_index))
+            if [[ ${ip_index} -lt ${CRITICAL_IPS} ]]; then
                 break;
             fi
-
         fi
     done
 
@@ -138,8 +145,8 @@ function report_failed_internet()
     local total_count=$2
     local internet_down=$3
 
-    if [[ failed_count -eq 0 ]]; then 
-        if $internet_down; then 
+    if [[ ${failed_count} -eq 0 ]]; then 
+        if ${internet_down}; then 
             speak_internet_up
             internet_down=false
         fi
@@ -175,7 +182,6 @@ function fuckingping_list()
 function fuckingping_default()
 {
     fuckingping_list  "router:10.10.1.1" "cable modem:73.184.0.28" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
-
 }
 
 function fuckingping_default_external()
@@ -187,14 +193,15 @@ function fuckingping_default_external()
 OPTIND=1
 
 QUIETLY=false
-VOICE="Fiona"
+CURRENT_VOICE=0
+VOICE_LIST="Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
 COMMAND="fuckingping_default"
 LIST_DELAY=10
 PING_WAIT=
 VULGAR_PREFIX="Fucking"
-CRITICAL_IPS=2
+CRITICAL_IPS=0
 
-while getopts "hqdxV:v:w:W:c:" opt; do
+while getopts "hqdxF:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -202,23 +209,39 @@ while getopts "hqdxV:v:w:W:c:" opt; do
         ;;
     q)  QUIETLY=true
         ;;
-    v)  VOICE="${OPTARG}"
+    v)  VOICE_LIST="${OPTARG}"
         ;;
     d)  COMMAND="fuckingping_list"
         ;;
     x)  COMMAND="fuckingping_default_external"
         ;;
-    V)  VULGAR_PREFIX="${OPTARG}"
+    F)  VULGAR_PREFIX="${OPTARG}"
         ;;
     w)  LIST_DELAY="${OPTARG}"
         ;;
     W)  PING_WAIT="${OPTARG}"
         ;;
-    c)  CRITICAL_IPS="${OPTARG}"
+    c)  critical_ips_opt="${OPTARG}"
+        ;;
     esac
 done
 
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
+
+IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
+
+if [[ -v critical_ips_opt ]]; then
+    CRITICAL_IPS=${critical_ips_opt}
+else
+    case "${COMMAND}" in
+    fuckingping_default)
+        CRITICAL_IPS=2
+        ;;
+    *)
+        CRITICAL_IPS=0
+        ;;
+    esac
+fi
 
 "${COMMAND}" "$@"
