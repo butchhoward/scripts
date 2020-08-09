@@ -17,12 +17,20 @@ Usage:
 
         -q quiet -- does not speak status. default is to speak
 
-        -d direct - use list of IP addresses give after '--'
+        -d direct - use list of IP addresses given after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
 
         -x eternal - use default list of IP address, but only the external ones
             This is useful when not using the house internet (i.e. a MiFi or some other)
+
+        -c critical addresses - define the number of IP addresses in the list to check which are critical 
+            The critical IP addresses must be at the beginning of the list
+            If any one of the critical addresses fails a ping, then the remainder of the list is skipped
+
+            When -d is used, the default value is zero.
+            When -x is used, the default value is zero.
+            When the default list is used, the default value is 2 (house router and cable modem).
 
         -v voice - use the "say" command voice name specified
             The default is "Fiona"
@@ -41,7 +49,10 @@ Usage:
             The IP list is formatted with an identifying string a colon separate and the dotted-quad IP
             If the identifier is not given it is ignored and Fiona will speak the IP directly.
 
+            The current default list (neither -d or -x are used) is:
             router:10.10.1.1 "cable modem":73.184.0.28 "xfinity DNS":75.75.75.75 openDNS:208.67.222.222 GoogleDNS:8.8.8.8 "Cloudflare DNS"1.1.1.1
+
+            The list when -x is used is the same with the "router" and "cable modem" addresses removed.
 
 
 Examples:
@@ -91,54 +102,10 @@ function the_pinger()
     ping -nqo ${ping_wait} -c 1 "$1" &> /dev/null
 }
 
-function the_list_pinger()
-{
-    local failed_count=0
-
-    for ip_value in "$@"; do
-        local ip_name="${ip_value%%:*}"
-        local ip="${ip_value##*:}"
-
-        if ! the_pinger "${ip}"; then
-            printf "%s " "${ip_name}"
-            ((++failed_count))
-        fi
-    done
-
-    return "$failed_count"
-}
-
-# this was an attempt to have it attempt all pings and return a list of failed
-# i did not end up using this because a failed ping takes consderable time to fail
-# if many were failing, it could be quite a long time before it would be reported (minutes, not hours, but...)
-function fuckingping_listX()
-{
-    echo "Begin ping tests for: " "$@"
-    current_wifi_adapter
-    date -jR
-
-    local internet_down=false
-
-    while true; do 
-        local error
-        error="$(the_list_pinger "$@")"
-        if ! error="$(the_list_pinger "$@")"; then
-            printf "${VULGAR_PREFIX} can't ping %s %s\n" "${error}" "$(date -jR)"
-            speak_internet_down "${error}"
-            internet_down=true
-        else
-            if $internet_down; then 
-                speak_internet_up
-                internet_down=false
-            fi
-        fi
-    done
-
-}
-
 function ping_the_list()
 {
     local failed_count=0
+    local ip_index=0
 
     for ip_value in "$@"; do
         local ip_name="${ip_value%%:*}"
@@ -154,6 +121,11 @@ function ping_the_list()
             printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
             ((++failed_count))
             speak_ping_fail "${ip_name}"
+
+            if [[ ip_index -lt CRITICAL_IPS ]]; then
+                break;
+            fi
+
         fi
     done
 
@@ -220,8 +192,9 @@ COMMAND="fuckingping_default"
 LIST_DELAY=10
 PING_WAIT=
 VULGAR_PREFIX="Fucking"
+CRITICAL_IPS=2
 
-while getopts "hqdxV:v:w:W:" opt; do
+while getopts "hqdxV:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -241,6 +214,7 @@ while getopts "hqdxV:v:w:W:" opt; do
         ;;
     W)  PING_WAIT="${OPTARG}"
         ;;
+    c)  CRITICAL_IPS="${OPTARG}"
     esac
 done
 
