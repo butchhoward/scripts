@@ -231,7 +231,7 @@ shift $((OPTIND-1))
 
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
 
-if [[ -v critical_ips_opt ]]; then
+if [ -v critical_ips_opt ]; then
     CRITICAL_IPS=${critical_ips_opt}
 else
     case "${COMMAND}" in
