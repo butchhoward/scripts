@@ -110,7 +110,7 @@ function git_supply()
     local INTERVAL=$4
     local USE_ALL_BRANCHES=$5
     local MAX_BRANCHES=$6
-    local BRANCHES=''
+    local -a BRANCHES
   
     local STAGE_FILE="/tmp/gource_staging.txt"
     rm ${STAGE_FILE} &>/dev/null
@@ -125,15 +125,17 @@ function git_supply()
     while true
     do
 
-        for REPO in $(ls -d *); do 
-            if [ -d ${REPO}/.git ]; then 
+        for REPO in */; do 
 
-                pushd ${REPO} &> /dev/null
+            if [ -d "${REPO}/.git" ]; then 
 
-                local INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
+                pushd "${REPO}" &> /dev/null || break
+
+                local INITIAL_COMMIT_SHA
+                INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
                 if ${USE_ALL_BRANCHES} ; then
-                    BRANCH=$(git_all_branches "${REMOTE}" ${MAX_BRANCHES})
+                    BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}")
                     IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
                 fi
 
@@ -149,24 +151,24 @@ function git_supply()
                         AUTHOR=$(git log --format=%an "${SHA}" --max-count=1)
                         TIMESTAMP=$(git log --format=%at "${SHA}" --max-count=1)
                         PREFIX="${TIMESTAMP}|${AUTHOR}|"
-                        git diff-tree -r --no-commit-id --name-status ${SHA} | tr '\t' '|' | while read SUFFIX
+                        git diff-tree -r --no-commit-id --name-status "${SHA}" | tr '\t' '|' | while read -r SUFFIX
                         do
-                            echo "${PREFIX}$(prepend_base_to_path ${PROJECT_BASE}/${REPO}/${BRANCH} ${SUFFIX})" >> "${STAGE_FILE}"
+                            echo "${PREFIX}$(prepend_base_to_path "${PROJECT_BASE}/${REPO}/${BRANCH}" "${SUFFIX}")" >> "${STAGE_FILE}"
                         done
                     done
 
                     SHAS["${BRANCH_KEY}"]=${SHA}
 
                 done
-                popd &> /dev/null
+                popd &> /dev/null || break
 
             fi
         done
 
         ship_the_log_file "${STAGE_FILE}"
 
-        test ${INTERVAL} = 0 && break
-        sleep ${INTERVAL}
+        test "${INTERVAL}" = 0 && break
+        sleep "${INTERVAL}"
     done
 }
 
@@ -180,7 +182,7 @@ function gource_consume()
                               --log-format custom \
                               --file-idle-time 0 \
                               --max-files 0 \
-                              $@ \
+                              "$@" \
                               - <&0
 }
 
@@ -200,25 +202,29 @@ function prepend_base_to_path()
     #A|images/discussions/2017-06-09_CAN-In-A-Box/can-in-a-box.jpg
     local PROJECT_BASE=$1
     local STATUS_AND_PATH=$2
-    echo ${STATUS_AND_PATH} | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
+    echo "${STATUS_AND_PATH}" | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
 
 }
 
 function git_all_branches()
 {
+
     local REMOTE=$1
     local LIMIT=${2:-100}
-    local BRANCHES=''
+    local BRANCHES
+    BRANCHES=""
 
-    for BRANCH in $(git for-each-ref --count=${LIMIT} --sort=-committerdate --format='%(refname:strip=3)' refs/remotes/${REMOTE}); do
+    for BRANCH in $(git for-each-ref --count="${LIMIT}" --sort=-committerdate --format='%(refname:strip=3)' "refs/remotes/${REMOTE}"); do
         if [ "HEAD" == "${BRANCH}" ]; then
             continue
         elif [ -n "${BRANCHES}" ]; then
+            # append comma delimiter if not first item
             BRANCHES="${BRANCHES},"
         fi
         BRANCHES="${BRANCHES}${BRANCH}"
     done
-    echo ${BRANCHES}
+
+    echo "${BRANCHES}"
 }
 
 
