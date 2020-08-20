@@ -264,9 +264,23 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-set -o pipefail
-git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" \
- | gource_consume "${PROJECT_BASE}" "$@"
+# set -o pipefail
+# git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" \
+#  | gource_consume "${PROJECT_BASE}" "$@"
 
+# create a pseudo-anonymous pipe
+PIPE=$(mktemp -u)
+mkfifo "${PIPE}"
+exec 3<>"${PIPE}"
+rm "${PIPE}"
 
+trap "kill 0" EXIT
+
+gource_consume "${PROJECT_BASE}" "$@" <&3 &
+CONSUME_PID=$!
+
+if ! git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" >&3; then
+    { kill ${CONSUME_PID} && wait ${CONSUME_PID}; } 2>/dev/null
+    exit 113
+fi
 
