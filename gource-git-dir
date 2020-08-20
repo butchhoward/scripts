@@ -124,7 +124,6 @@ function git_supply()
 
     while true
     do
-
         for REPO in */; do 
 
             if [ -d "${REPO}/.git" ]; then 
@@ -140,8 +139,11 @@ function git_supply()
                 fi
 
                 for BRANCH in "${BRANCHES[@]}"; do
-                    
-                    git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1
+
+                    if ! git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1; then
+                        >&2 echo "invalid branch: '${BRANCH}'"
+                        return 112
+                    fi
 
                     local BRANCH_KEY="${REPO}_${BRANCH}"
                     local SHA=${SHAS["${BRANCH_KEY}"]:-"${INITIAL_COMMIT_SHA}"}
@@ -183,7 +185,8 @@ function gource_consume()
                               --file-idle-time 0 \
                               --max-files 0 \
                               "$@" \
-                              - <&0
+                              - <&0 \
+                              1>&2
 }
 
 function ship_the_log_file
@@ -261,4 +264,9 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" | gource_consume "${PROJECT_BASE}" "$@"
+set -o pipefail
+git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" \
+ | gource_consume "${PROJECT_BASE}" "$@"
+
+
+
