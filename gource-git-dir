@@ -16,7 +16,10 @@ Requires:
     A folder with folders beneath it which are git repositories
 
 Usage:
-    gource-git-dir [-p ProjectName] [-r RemoteOrigin] [-b BranchesToDisplay] [-i [PollingInterval] [-B] [-N MaxBranches] [-- GOURCE_OPTIONS]
+    gource-git-dir [-q] [-p ProjectName] [-r RemoteOrigin] [-b BranchesToDisplay] [-i [PollingInterval] [-B] [-N MaxBranches] [-- GOURCE_OPTIONS]
+        -q Quiet (-ish)
+            Ignore invalid branches
+
         -p ProjectName - defaults to "Base"
             This is a name to aide gource in displaying multiple branches
             It will also be displayed in the lower left of the window
@@ -44,6 +47,14 @@ Usage:
 
         -i PollingInterval - defaults to 10
             The delay in seconds between polling cycles for fetching new commit logs
+
+        -d Directories - defaults to all directories in the current folder (-d '.')
+            Comma-delimited list of directories to process
+            If a directory in the list is NOT a git repository, all the directories in it are used (only goes that one level deep)
+            If you put spaces between the directories or the directories have spaces, you must quote the string (single quotes are probably best)
+
+            -d './project1,~/allprojects'
+
 
     Pass gource options to the gource invocation by putting '--' after all the options for gource-git-dir
     and then the gource options. gource is run with some options already set:
@@ -110,21 +121,47 @@ function git_supply()
     local INTERVAL=$4
     local USE_ALL_BRANCHES=$5
     local MAX_BRANCHES=$6
+    local DIRECTORY=$7
     local -a BRANCHES
+    local -a DIRECTORIES
   
-    local STAGE_FILE="/tmp/gource_staging.txt"
-    rm ${STAGE_FILE} &>/dev/null
+    local STAGE_FILE=''
+    
+    if ! STAGE_FILE="$(mktemp -q "/tmp/$(basename "$0").XXXXXX")"; then
+        echo "$0: Can't create temp file, exiting..."
+        return 110
+    fi
   
-    #requires Bash 4.x - associative array using directory name as key
+    #requires Bash 4.x - associative array using directory name+branch as key
     declare -A SHAS=()
 
     if ! ${USE_ALL_BRANCHES} ; then
         IFS=',' read -r -a BRANCHES <<< "${BRANCH}"
     fi
 
+    if [ -n "${DIRECTORY}" ]; then
+        IFS=',' read -r -a DS <<< "${DIRECTORY}"
+
+        for FOLDER in "${DS[@]}"; do 
+            # eval FOLDER_GLOBBED="${FOLDER}"
+            FOLDER_EXPANDED="${FOLDER/#\~/$HOME}"
+
+            if [ -d "${FOLDER_EXPANDED}/.git" ]; then 
+                DIRECTORIES=("${DIRECTORIES[@]}" "${FOLDER_EXPANDED%/*}")
+            else
+                for d in "${FOLDER_EXPANDED}"/*/ ; do
+                    DIRECTORIES=("${DIRECTORIES[@]}" "${d%/*}")
+                done
+            fi
+        done
+    else
+        DIRECTORIES=(./*/)
+        DIRECTORIES=("${DIRECTORIES[@]%/}")
+    fi
+
     while true
     do
-        for REPO in */; do 
+        for REPO in "${DIRECTORIES[@]}"; do 
 
             if [ -d "${REPO}/.git" ]; then 
 
@@ -135,14 +172,22 @@ function git_supply()
 
                 if ${USE_ALL_BRANCHES} ; then
                     BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}")
+                    if ! BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}"); then
+                        echoerr "no branches found in repo '${REPO}'"
+                        return 109
+                    fi
                     IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
                 fi
 
                 for BRANCH in "${BRANCHES[@]}"; do
 
                     if ! git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1; then
-                        >&2 echo "invalid branch: '${BRANCH}'"
-                        return 112
+                        if ${IGNORE_INVALID_BRANCHES}; then
+                            continue
+                        else
+                            echoerr "invalid branch: '${BRANCH}' in repo '${REPO}'"
+                            return 108
+                        fi
                     fi
 
                     local BRANCH_KEY="${REPO}_${BRANCH}"
@@ -239,12 +284,16 @@ BRANCH="master"
 INTERVAL=10
 USE_ALL_BRANCHES=false
 MAX_BRANCHES=100
+DIRECTORY=
+IGNORE_INVALID_BRANCHES=false
 
-while getopts "hp:r:b:i:BN:" opt; do
+while getopts "hqp:r:b:i:BN:d:" opt; do
     case "${opt}" in
     h|\?)
         show_help
         exit 0
+        ;;
+    q) IGNORE_INVALID_BRANCHES=true
         ;;
     p)  PROJECT_BASE=${OPTARG}
         ;;
@@ -258,17 +307,19 @@ while getopts "hp:r:b:i:BN:" opt; do
         ;;
     i)  INTERVAL=${OPTARG}
         ;;
+    d)  DIRECTORY=${OPTARG}
+        ;;
     esac
 done
 
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
-# set -o pipefail
-# git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" \
-#  | gource_consume "${PROJECT_BASE}" "$@"
-
 # create a pseudo-anonymous pipe
+# use the pipe
+#   start the pipe reader first! run it in the background!
+#   start the pipe writer
+#       if it fails, kill the background task (note: I'm not sure this is really doing what I intend)
 PIPE=$(mktemp -u)
 mkfifo "${PIPE}"
 exec 3<>"${PIPE}"
@@ -279,7 +330,7 @@ trap "kill 0" EXIT
 gource_consume "${PROJECT_BASE}" "$@" <&3 &
 CONSUME_PID=$!
 
-if ! git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" >&3; then
+if ! git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" "${DIRECTORY}">&3; then
     { kill ${CONSUME_PID} && wait ${CONSUME_PID}; } 2>/dev/null
     exit 113
 fi
