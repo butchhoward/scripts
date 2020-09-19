@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Note that this script is pretty heavily MacOS-specific
+
+
 function show_help()
 {
 
@@ -102,6 +105,18 @@ function current_wifi_adapter()
     networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
 }
 
+function number1_network()
+{
+    local the_one
+    the_one="$(networksetup -listnetworkserviceorder | grep -oEe '^\(1\) .*$' | grep -oEe '[A-Z][a-zA-Z ]+$')"
+    local is_enabled
+    if ! is_enabled="$(networksetup -getnetworkserviceenabled "${the_one}")" ;then
+        is_enabled="NOT Enabled or NOT Present"
+    fi
+
+    echo "Preferred network: ${the_one} (${is_enabled})"
+}
+
 function the_pinger()
 {
     local ping_wait="${PING_WAIT:+"-W ${PING_WAIT}"}"
@@ -162,6 +177,7 @@ function fuckingping_list()
 {
     echo "Begin ping tests for: " "$@"
     current_wifi_adapter
+    number1_network
     date -jR
 
     local failed_count=0
