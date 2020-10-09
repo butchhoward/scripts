@@ -170,7 +170,7 @@ function report_failed_internet()
         speak_internet_problem "${failed_count}" "${total_count}"
     fi
 
-    echo "${internet_down}"
+    echo "${internet_down} " "$(date -jR)"
 }
 
 function fuckingping_list()
