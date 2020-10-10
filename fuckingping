@@ -173,9 +173,21 @@ function report_failed_internet()
     echo "${internet_down} " "$(date -jR)"
 }
 
+function report_opts()
+{
+    echo "QUIETLY=${QUIETLY}"
+    echo "VOICE_LIST=${VOICE_LIST}"
+    echo "COMMAND=${COMMAND}"
+    echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
+    echo "LIST_DELAY=${LIST_DELAY}"
+    echo "PING_WAIT=${PING_WAIT}"
+    echo "CRITICAL_IPS=${CRITICAL_IPS}"
+}
+
 function fuckingping_list()
 {
     echo "Begin ping tests for: " "$@"
+    report_opts
     current_wifi_adapter
     number1_network
     date -jR
@@ -259,5 +271,6 @@ else
         ;;
     esac
 fi
+
 
 "${COMMAND}" "$@"
