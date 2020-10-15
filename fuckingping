@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Note that this script is pretty heavily MacOS-specific
-
-
 function show_help()
 {
 
@@ -10,8 +7,6 @@ cat<<EOF
 
 
 Fuckingping some IP addresses to check Wifi connectivity
-
-Probably only works on MacOS
 
 
 Usage:
@@ -74,17 +69,31 @@ EOF
 
 }
 
+IS_MACOS=true
+if [[ "$OSTYPE" == "darwin"* ]]; then
+        IS_MACOS=true
+else
+        IS_MACOS=false
+fi
+IS_MACOS=false
+
+
 function speak_internet_up()
 {
     if ! ${QUIETLY}; then
-        say --voice="${VOICES[0]}" "Internet is back up"
+        if ${IS_MACOS}; then
+            say --voice="${VOICES[0]}" "Internet is back up"
+        fi
     fi
 }
 
 function speak_ping_fail()
 {
     if ! ${QUIETLY}; then
-        say --voice="${VOICES[${CURRENT_VOICE}]}" "${VULGAR_PREFIX} can't ping ${1}"
+        if ${IS_MACOS}; then
+            say --voice="${VOICES[${CURRENT_VOICE}]}" "${VULGAR_PREFIX} can't ping ${1}"
+        fi
+
         ((++CURRENT_VOICE))
         if [[ "${CURRENT_VOICE}" -ge "${#VOICES[@]}" ]]; then
             CURRENT_VOICE=0
@@ -96,24 +105,31 @@ function speak_ping_fail()
 function speak_internet_problem()
 {
     if ! ${QUIETLY}; then
-        say --voice="${VOICES[0]}" "${VULGAR_PREFIX} $1 of $2 pings failed."
+        if ${IS_MACOS}; then
+            say --voice="${VOICES[0]}" "${VULGAR_PREFIX} $1 of $2 pings failed."
+        fi
     fi
 }
 
 function current_wifi_adapter()
 {
-    networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
+    if ${IS_MACOS}; then
+        networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
+    else
+        echo "UNKNOWN WIFI"
+    fi
 }
 
 function number1_network()
 {
-    local the_one
-    the_one="$(networksetup -listnetworkserviceorder | grep -oEe '^\(1\) .*$' | grep -oEe '[A-Z][a-zA-Z ]+$')"
-    local is_enabled
-    if ! is_enabled="$(networksetup -getnetworkserviceenabled "${the_one}")" ;then
-        is_enabled="NOT Enabled or NOT Present"
+    local the_one="UNKNOWN"
+    local is_enabled="MAYBE ENABLED"
+    if ${IS_MACOS}; then
+        the_one="$(networksetup -listnetworkserviceorder | grep -oEe '^\(1\) .*$' | grep -oEe '[A-Z][a-zA-Z ]+$')"
+        if ! is_enabled="$(networksetup -getnetworkserviceenabled "${the_one}")" ;then
+            is_enabled="NOT Enabled or NOT Present"
+        fi
     fi
-
     echo "Preferred network: ${the_one} (${is_enabled})"
 }
 
