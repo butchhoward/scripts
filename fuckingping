@@ -225,7 +225,7 @@ function fuckingping_list()
 
 function fuckingping_default()
 {
-    fuckingping_list  "router:10.10.1.1" "cable modem:73.184.0.28" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    fuckingping_list  "router:10.10.1.1" "cable modem:174.49.80.36" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
 }
 
 function fuckingping_default_external()
