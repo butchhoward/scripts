@@ -15,6 +15,9 @@ Usage:
 
         -q quiet -- does not speak status. default is to speak
 
+        -Q very Quiet -- does not log full failed status only an marker in the dots instead. 
+           Default is to log time and ip that failed.
+
         -d direct - use list of IP addresses given after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
@@ -28,7 +31,7 @@ Usage:
 
             When -d is used, the default value is zero.
             When -x is used, the default value is zero.
-            When the default list is used, the default value is 2 (house router and cable modem).
+            When the default list is used, the default value is 3 (house routers and cable modem).
 
         -v voice - use the "say" command voice name(s) specified
             The default is "Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
@@ -152,11 +155,16 @@ function ping_the_list()
         if the_pinger "${ip}"; then
             printf "%s" "."
         else
-            if [[ ${failed_count} -eq 0 ]]; then 
-                printf "\n";
+            if ${VERY_QUIETLY}; then
+                printf "%s" "*"
+            else
+                if [[ ${failed_count} -eq 0 ]]; then 
+                    printf "\n";
+                fi
+
+                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
             fi
 
-            printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
             ((++failed_count))
             speak_ping_fail "${ip_name}"
 
@@ -174,19 +182,19 @@ function report_failed_internet()
 {
     local failed_count=$1
     local total_count=$2
-    local internet_down=$3
+    local internet_was_down=$3
 
     if [[ ${failed_count} -eq 0 ]]; then 
-        if ${internet_down}; then 
+        if [[ ${internet_was_down} -ne 0 ]]; then 
             speak_internet_up
-            internet_down=false
+            internet_was_down=1
         fi
     else
-        internet_down=true
+        internet_was_down=0
         speak_internet_problem "${failed_count}" "${total_count}"
     fi
 
-    echo "${internet_down} " "$(date -jR)"
+    return ${internet_was_down}
 }
 
 function report_opts()
@@ -202,16 +210,19 @@ function report_opts()
 
 function fuckingping_list()
 {
-    echo "Begin ping tests for: " "$@"
-    report_opts
-    current_wifi_adapter
-    number1_network
-    date -jR
+    if ! ${VERY_QUIETLY}; then
+        echo "Begin ping tests for: " "$@"
+        report_opts
+        current_wifi_adapter
+        number1_network
+        date -jR
+    fi 
 
     local failed_count=0
-    local internet_down=false
+    local internet_down=0
 
     while true; do 
+        # failed_count=$(ping_the_list "$@")
         ping_the_list "$@"
         failed_count=$?
 
@@ -237,6 +248,7 @@ function fuckingping_default_external()
 OPTIND=1
 
 QUIETLY=false
+VERY_QUIETLY=false
 CURRENT_VOICE=0
 VOICE_LIST="Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
 COMMAND="fuckingping_default"
@@ -245,13 +257,16 @@ PING_WAIT=
 VULGAR_PREFIX="Fucking"
 CRITICAL_IPS=0
 
-while getopts "hqdxF:v:w:W:c:" opt; do
+while getopts "hqQdxF:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
         show_help
         exit 0
         ;;
     q)  QUIETLY=true
+        ;;
+    Q)  VERY_QUIETLY=true
+        QUIETLY=true
         ;;
     v)  VOICE_LIST="${OPTARG}"
         ;;
