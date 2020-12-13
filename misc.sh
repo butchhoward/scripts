@@ -29,16 +29,18 @@ function path_remove ()
     export PATH=$(echo -n "$PATH" | awk -v RS=: -v ORS=: '$0 != "'"$1"'"' | sed 's/:$//')
 }
 
-# top display for process names matching grep pattern '$1'
-function toppgrep()
-{
-    top -pid $(pgrep "$1" | tr "\\n" "," | sed 's/,$//')
-}
-
-
 # Wifi Checker tools
 
 function current_wifi_adapter()
 {
     networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}' | xargs networksetup -getairportnetwork
+}
+
+
+# mac-ish pgrep to top pipe (mac sed, mac top are a bit diff from gnu)
+function topgrep()
+{
+    # word splitting is needed here
+    # shellcheck disable=SC2046
+    top $(pgrep -f "$@" | awk '{print $1}' | sed -E 's/^(.*)$/-pid \1 /g' | sed -E 's/\n//g' | paste -sd' ' -)
 }
