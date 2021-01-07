@@ -159,10 +159,13 @@ function git_supply()
         DIRECTORIES=("${DIRECTORIES[@]%/}")
     fi
 
+
     while true
     do
-        for REPO in "${DIRECTORIES[@]}"; do 
+        : > "${STAGE_FILE}"
 
+        for REPO in "${DIRECTORIES[@]}"; do 
+  
             if [ -d "${REPO}/.git" ]; then 
 
                 pushd "${REPO}" &> /dev/null || break
@@ -180,7 +183,7 @@ function git_supply()
                 fi
 
                 for BRANCH in "${BRANCHES[@]}"; do
-
+ 
                     if ! git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1; then
                         if ${IGNORE_INVALID_BRANCHES}; then
                             continue
@@ -217,6 +220,9 @@ function git_supply()
         test "${INTERVAL}" = 0 && break
         sleep "${INTERVAL}"
     done
+
+    rm "${STAGE_FILE}" &>/dev/null
+
 }
 
 function gource_consume()
@@ -239,9 +245,8 @@ function ship_the_log_file
     local STAGE_FILE=$1
 
     #the output from the sort is the output for gource
-    if [ -e "${STAGE_FILE}" ]; then
+    if [ -s "${STAGE_FILE}" ]; then
         sort -n "${STAGE_FILE}"
-        rm "${STAGE_FILE}" &>/dev/null
     fi
     
 }
@@ -287,7 +292,7 @@ MAX_BRANCHES=100
 DIRECTORY=
 IGNORE_INVALID_BRANCHES=false
 
-while getopts "hqp:r:b:i:BN:d:" opt; do
+while getopts "hqBp:r:b:i:N:d:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -330,7 +335,7 @@ trap "kill 0" EXIT
 gource_consume "${PROJECT_BASE}" "$@" <&3 &
 CONSUME_PID=$!
 
-if ! git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" "${DIRECTORY}">&3; then
+if ! git_supply "${PROJECT_BASE}" "${REMOTE}" "${BRANCH}" "${INTERVAL}" "${USE_ALL_BRANCHES}" "${MAX_BRANCHES}" "${DIRECTORY}" >&3; then
     { kill ${CONSUME_PID} && wait ${CONSUME_PID}; } 2>/dev/null
     exit 113
 fi
