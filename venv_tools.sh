@@ -80,7 +80,6 @@ function venv_is_a_venv()
     return 1
 }
 
-# shellcheck disable=SC2120
 function venv_remove()
 {
     local location
@@ -94,7 +93,6 @@ function venv_remove()
     fi
     }
 
-# shellcheck disable=SC2120
 function venv_create()
 {
     local version="${1:-$(venv_def_py)}"
@@ -117,7 +115,6 @@ function venv_create()
     fi
 }
 
-# shellcheck disable=SC2120
 function venv_activate()
 {
     venv_deactivate
