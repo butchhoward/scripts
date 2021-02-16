@@ -174,4 +174,18 @@ function repo_delete_all_local_branches()
     repo_prune_remote_branches
 }
 
-
+function repo_wip_merge()
+{
+    git checkout main || return $?
+    git merge --ff-only wip || return $?
+    git branch -d wip || return $?
+}
+function repo_wip_rebase()
+{
+    git branch wip || return $?
+    git reset --hard origin/main || return $?
+    git checkout wip || return $?
+    git rebase main || return $?
+    # if there are merge conflicts, resolve them and then
+    repo_wip_merge
+}
