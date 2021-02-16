@@ -108,9 +108,9 @@ function venv_create()
         if [[ "${version}" < "3" ]]; then
             # use virtualenvwrapper tools for the prehistoric pythons
             echo "using virtualenvwrapper for python 2.x to create environment '${location##*/}' because version='${version}'"
-            # shellcheck disable=SC1094
+            # shellcheck disable=SC1091
             source /usr/local/bin/virtualenvwrapper.sh
-            mkvirtualenv -p ~/.pyenv/versions/${version}/bin/python "${location##*/}"
+            mkvirtualenv -p "$HOME/.pyenv/versions/${version}/bin/python" "${location##*/}"
         else
             ~/.pyenv/versions/"${version}"/bin/python -m venv "${location}"
         fi
@@ -133,6 +133,7 @@ function venv_activate()
 function venv_pip_requirements()
 {
     local requirements_file=${1:-"requirements.txt"}
+    echo "REQUIREMENTS: ${requirements_file}"
     if [ -a "${requirements_file}" ]; then
         pip install --upgrade -r "${requirements_file}"
     else
@@ -147,6 +148,9 @@ function venv_rebuild()
     local location="${3:-$(venv_location)}"
 
     local requirements_file="${requirements_folder}/requirements.txt"
+    if [ -r "${requirements_folder}/requirements-dev.txt" ]; then
+        requirements_file="${requirements_folder}/requirements-dev.txt"
+    fi
     
     venv_create "${version}" "${location}"
     venv_activate "${location}"
