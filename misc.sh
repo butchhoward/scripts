@@ -44,3 +44,22 @@ function topgrep()
     # shellcheck disable=SC2046
     top $(pgrep -f "$@" | awk '{print $1}' | sed -E 's/^(.*)$/-pid \1 /g' | sed -E 's/\n//g' | paste -sd' ' -)
 }
+
+# switch between ~/.ssh/config files. Copy the one specified to be the active one.
+# single param is the prefix for the config to use: 
+#       switch_ssh default
+#       switch_ssh client
+function switch_ssh()
+{
+    config_name="${HOME}/.ssh/config"
+    src_config_name="${config_name}.${1:-default_config}"
+
+    if test -f "${src_config_name}"; then
+        ssh-add -D >& /dev/null # delete all keys in the keychain just in case
+        cp "${src_config_name}" "${config_name}"
+        echo "switched ssh config to: ${1}"
+    else
+        echo "could not find ${src_config_name}" 1>&2
+        return 1
+    fi
+}
