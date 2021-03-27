@@ -27,10 +27,10 @@ venv_def_py()
 function venv_help()
 {
     echo ""
-    echo "venv_rebuild requirements_folder version location"
-    echo "      folder defaults to current"
-    echo "      version defaults to '$(venv_def_py)'"
-    echo "      venv location defaults to computed (../.venv/<git repo name>)"
+    echo "venv_rebuild requirements_file py_version venv_location"
+    echo "      requirements_file defaults to './requirements.txt'"
+    echo "      py_version defaults to '$(venv_def_py)'"
+    echo "      venv_location defaults to computed (../.venv/<git repo name>): '$(venv_location)'"
     echo ""
     echo ""
     echo "venv_activate"
@@ -84,6 +84,9 @@ function venv_remove()
 {
     local location
     local location=${1:-$(venv_location)}
+
+    venv_deactivate
+
     if [[ -d "${location}" && -e "${location}/bin/activate" ]]; then
             rm -rf "${location}"
     fi
@@ -129,6 +132,7 @@ function venv_activate()
 
 function venv_pip_requirements()
 {
+    set -x
     local requirements_file=${1:-"requirements.txt"}
     echo "REQUIREMENTS: ${requirements_file}"
     if [ -a "${requirements_file}" ]; then
@@ -136,11 +140,12 @@ function venv_pip_requirements()
     else
         echo "Could not pip the requirments file: '${requirements_file}'"
     fi
+    set +x
 }
 
 function venv_rebuild()
 {
-    local requirements_folder=${1:-'.'}
+    local requirements_folder="${1:-"."}"
     local version="${2:-$(venv_def_py)}"
     local location="${3:-$(venv_location)}"
 
