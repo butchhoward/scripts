@@ -176,16 +176,20 @@ function repo_delete_all_local_branches()
 
 function repo_wip_merge()
 {
-    git checkout main || return $?
+    BASE_BRANCH=${1:-"main"}
+
+    git checkout "${BASE_BRANCH}" || return $?
     git merge --ff-only wip || return $?
     git branch -d wip || return $?
 }
 function repo_wip_rebase()
 {
+    BASE_BRANCH=${1:-"main"}
+
     git branch wip || return $?
-    git reset --hard origin/main || return $?
+    git reset --hard "origin/${BASE_BRANCH}" || return $?
     git checkout wip || return $?
-    git rebase main || return $?
+    git rebase "${BASE_BRANCH}" || return $?
     # if there are merge conflicts, resolve them and then
-    repo_wip_merge
+    repo_wip_merge "${BASE_BRANCH}"
 }
