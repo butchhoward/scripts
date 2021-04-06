@@ -21,6 +21,11 @@
 
 venv_def_py()
 {
+    pyenv versions | sed 's/^  //g' | sed 's/^* //g' | sed 's/(.*$//g' | sed 's/ *$//' | grep '^\d' | tail -1
+}
+
+venv_newest_py()
+{
     pyenv install --list | sed 's/^  //' | grep '^\d' | grep --invert-match 'dev\|a\|b' | tail -1
 }
 
@@ -42,7 +47,7 @@ function venv_help()
     echo ""
     echo "venv_pip_upgrade"
 }
-    
+
 
 function venv_location()
 {
@@ -123,7 +128,7 @@ function venv_activate()
     venv_deactivate
     local location="${1:-$(venv_location)}"
     local activate_script="${location}"/bin/activate
-    if [ -r "${activate_script}" ]; then 
+    if [ -r "${activate_script}" ]; then
         source "${activate_script}"
     else
         workon "${location##*/}"
@@ -132,7 +137,6 @@ function venv_activate()
 
 function venv_pip_requirements()
 {
-    set -x
     local requirements_file=${1:-"requirements.txt"}
     echo "REQUIREMENTS: ${requirements_file}"
     if [ -a "${requirements_file}" ]; then
@@ -140,7 +144,6 @@ function venv_pip_requirements()
     else
         echo "Could not pip the requirments file: '${requirements_file}'"
     fi
-    set +x
 }
 
 function venv_rebuild()
@@ -153,7 +156,7 @@ function venv_rebuild()
     if [ -r "${requirements_folder}/requirements-dev.txt" ]; then
         requirements_file="${requirements_folder}/requirements-dev.txt"
     fi
-    
+
     venv_create "${version}" "${location}"
     venv_activate "${location}"
     venv_pip_upgrade
