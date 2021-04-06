@@ -3,12 +3,38 @@
 
 function docker_rm_all()
 {
-    docker rm "$(docker ps -aq)"
+    local MATCH_TARGET=${1}
+    local FILTER=""
+
+    if [ -n "${MATCH_TARGET}" ]; then
+        FILTER="--filter \"ancestor=${MATCH_TARGET}\""
+    fi
+
+    docker container ls -aq "${FILTER}" | while IFS= read -r container_id; do
+        docker container rm "${container_id}"
+    done
+}
+
+function docker_rmi_matching()
+{
+    local MATCH_TARGET="$1"
+    local FILTER=""
+
+    if [ -n "${MATCH_TARGET}" ]; then
+        FILTER="--filter reference=\"${MATCH_TARGET}\""
+    fi
+
+    docker image ls -qa  "${FILTER}" | while IFS= read -r image_id; do
+        docker image rm "${image_id}"
+    done
 }
 
 function docker_rmi_dangling()
 {
-    docker rmi "$(docker images -f "dangling=true" -q)"
+
+    docker image ls -f "dangling=true" -q | while IFS= read -r image_id; do
+        docker image rm "${image_id}"
+    done
 }
 
 
@@ -19,11 +45,14 @@ function docker_rmi_dangling()
 #
 # docker_rmi_matching "drydock*\/*\/*"
 #
-# use 
+# use
 # docker images --filter=reference="drydock*\/*\/*"
 # to preview the list of images that will be removed
 function docker_rmi_matching()
 {
     local MATCH_TARGET=${1:?"Give me something to match!"}
-    docker rmi "$(docker images -qa --filter=reference="${MATCH_TARGET}")"
+
+    docker image ls -qa --filter=reference="${MATCH_TARGET}" | while IFS= read -r image_id; do
+        docker image rm "{image_id}"
+    done
 }
