@@ -10,7 +10,7 @@ cat<<EOF
 Pretty OpenGL display of activity in a collection of git repositories.
 
 Requires:
-    gource http://gource.io/ 
+    gource http://gource.io/
     bash version >= 4.x to get associate array support
 
     A folder with folders beneath it which are git repositories
@@ -32,7 +32,7 @@ Usage:
             Example: "-b master,develop"
 
             This option uses the same list of branches for each repository.
-            It's best if all the branches listed exist in all the repos. If that is not true, 
+            It's best if all the branches listed exist in all the repos. If that is not true,
               it will not stop the script from gathering the logs from the branches that
               do exist. You will see some error output about the problems.
 
@@ -42,7 +42,7 @@ Usage:
             Note that the more branches there are to display the long it will take to start up.
 
         -N MaxBranches
-            Use with -B to limit the number of branches to graph for those repos with thousands of 
+            Use with -B to limit the number of branches to graph for those repos with thousands of
             undeleted branches.
 
         -i PollingInterval - defaults to 10
@@ -65,17 +65,17 @@ Usage:
                --log-format custom \\
                --file-idle-time 0 \\
                --max-files 0
-                                
+
     See the gource wiki for listings of its options.
 
 Installation:
 
-    gource can be instlaled on Mac OSX with 
+    gource can be instlaled on Mac OSX with
         brew install gource
-    
-    Check your bash version with 
+
+    Check your bash version with
         bash --version
-    
+
     If you need a newer version, install it with
         brew install bash
 
@@ -83,7 +83,7 @@ Example:
 
 Given the folder structure below where all of the folders under ./prpl are git repositories
 And ./prpl is the current directory
-And the script is run as 
+And the script is run as
     gource-git-dir -p Loop -r origin -b master,develop -i 10
 
 Then a beautiful display graphic of changes to the repositories will be displayed after a short pause
@@ -97,7 +97,7 @@ to collect the initial logs.
   |-pRpl-rest-client
 
 The display will first show how the repositories evolved over time from the initial commits. When
-it catches up to the current state, then it will poll each interval for new commits to display. The gource 
+it catches up to the current state, then it will poll each interval for new commits to display. The gource
 will start in full-screen mode. Press <ALT>-<ENTER> to change between full-screen and windowed. Press
 <ESC> to quit (you might also have to <CTRL-C> the program in the terminal to get the polling piece to stop).
 See the gource wiki for shortcut keys to modify the display while it is running.
@@ -108,8 +108,8 @@ EOF
 
 }
 
-echoerr() 
-{ 
+echoerr()
+{
     printf "%s\n" "$*" >&2
 }
 
@@ -124,14 +124,14 @@ function git_supply()
     local DIRECTORY=$7
     local -a BRANCHES
     local -a DIRECTORIES
-  
+
     local STAGE_FILE=''
-    
+
     if ! STAGE_FILE="$(mktemp -q "/tmp/$(basename "$0").XXXXXX")"; then
         echo "$0: Can't create temp file, exiting..."
         return 110
     fi
-  
+
     #requires Bash 4.x - associative array using directory name+branch as key
     declare -A SHAS=()
 
@@ -142,11 +142,11 @@ function git_supply()
     if [ -n "${DIRECTORY}" ]; then
         IFS=',' read -r -a DS <<< "${DIRECTORY}"
 
-        for FOLDER in "${DS[@]}"; do 
+        for FOLDER in "${DS[@]}"; do
             # eval FOLDER_GLOBBED="${FOLDER}"
             FOLDER_EXPANDED="${FOLDER/#\~/$HOME}"
 
-            if [ -d "${FOLDER_EXPANDED}/.git" ]; then 
+            if [ -d "${FOLDER_EXPANDED}/.git" ]; then
                 DIRECTORIES=("${DIRECTORIES[@]}" "${FOLDER_EXPANDED%/*}")
             else
                 for d in "${FOLDER_EXPANDED}"/*/ ; do
@@ -162,11 +162,12 @@ function git_supply()
 
     while true
     do
+        # truncate file (redirect empty output from the TRUE operator into file, overwriting file)
         : > "${STAGE_FILE}"
 
-        for REPO in "${DIRECTORIES[@]}"; do 
-  
-            if [ -d "${REPO}/.git" ]; then 
+        for REPO in "${DIRECTORIES[@]}"; do
+
+            if [ -d "${REPO}/.git" ]; then
 
                 pushd "${REPO}" &> /dev/null || break
 
@@ -174,16 +175,16 @@ function git_supply()
                 INITIAL_COMMIT_SHA=$(git rev-list --max-parents=0 HEAD)
 
                 if ${USE_ALL_BRANCHES} ; then
-                    BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}")
+
                     if ! BRANCH=$(git_all_branches "${REMOTE}" "${MAX_BRANCHES}"); then
                         echoerr "no branches found in repo '${REPO}'"
                         return 109
                     fi
-                    IFS=',' read -r -a BRANCHES <<< "${BRANCH}"                    
+                    IFS=',' read -r -a BRANCHES <<< "${BRANCH}"
                 fi
 
                 for BRANCH in "${BRANCHES[@]}"; do
- 
+
                     if ! git fetch "${REMOTE}" "${BRANCH}" >/dev/null 2>&1; then
                         if ${IGNORE_INVALID_BRANCHES}; then
                             continue
@@ -248,7 +249,7 @@ function ship_the_log_file
     if [ -s "${STAGE_FILE}" ]; then
         sort -n "${STAGE_FILE}"
     fi
-    
+
 }
 function prepend_base_to_path()
 {
