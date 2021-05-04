@@ -64,3 +64,10 @@ function switch_ssh()
         return 1
     fi
 }
+
+
+# Pretty-print format all json files in the current folder
+function pretty_json()
+{
+    for f in *.json; do jq '.' "$f" > "mod_$f"; mv "mod_$f" "$f"; done
+}
