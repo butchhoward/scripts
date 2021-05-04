@@ -63,6 +63,7 @@ function venv_location()
 function venv_pip_upgrade()
 {
     pip install --upgrade pip
+    pip install wheel
 }
 
 function venv_deactivate()
