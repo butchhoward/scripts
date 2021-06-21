@@ -15,20 +15,6 @@ function docker_rm_all()
     done
 }
 
-function docker_rmi_matching()
-{
-    local MATCH_TARGET="$1"
-    local FILTER=""
-
-    if [ -n "${MATCH_TARGET}" ]; then
-        FILTER="--filter reference=\"${MATCH_TARGET}\""
-    fi
-
-    docker image ls -qa  "${FILTER}" | while IFS= read -r image_id; do
-        docker image rm "${image_id}"
-    done
-}
-
 function docker_rmi_dangling()
 {
 
@@ -48,11 +34,14 @@ function docker_rmi_dangling()
 # use
 # docker images --filter=reference="drydock*\/*\/*"
 # to preview the list of images that will be removed
+#
+# example:
+#    docker_rmi_matching 'gather*:*'
 function docker_rmi_matching()
 {
     local MATCH_TARGET=${1:?"Give me something to match!"}
 
     docker image ls -qa --filter=reference="${MATCH_TARGET}" | while IFS= read -r image_id; do
-        docker image rm "{image_id}"
+        docker image rm -f "${image_id}"
     done
 }
