@@ -25,8 +25,8 @@ function repo_base_dir()
 
 function repo_do_it_to_all()
 {
-    for d in ./*;do 
-        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+    for d in ./*;do
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then
             pushd "$d" &> /dev/null || exit 1
             echo ""
             echo "====$(pwd)===>[$*]"
@@ -38,8 +38,8 @@ function repo_do_it_to_all()
 
 function repo_do_it_to_all_quietly()
 {
-    for d in ./*;do 
-        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+    for d in ./*;do
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then
             pushd "$d" &> /dev/null || exit 1
             "$@"
             popd &> /dev/null || exit 1
@@ -49,8 +49,8 @@ function repo_do_it_to_all_quietly()
 
 function repo_do_it_to_all_very_quietly()
 {
-    for d in ./*;do 
-        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then 
+    for d in ./*;do
+        if [[ -d "$d" ]] && [[ -d "$d"/.git ]]; then
             pushd "$d" &> /dev/null || exit 1
             "$@" &> /dev/null
             popd &> /dev/null || exit 1
@@ -58,7 +58,7 @@ function repo_do_it_to_all_very_quietly()
     done
 }
 
-repo_is_clean() 
+repo_is_clean()
 {
 
     #untrack files (and modified and deleted. might be redundant of the other checks)
@@ -149,7 +149,7 @@ function repo_clean_fdx_all()
 
 function repo_prune_remote_branches()
 {
-    for remote_name in $(git remote); do 
+    for remote_name in $(git remote); do
         git remote prune "$remote_name"
     done
 }
@@ -192,4 +192,55 @@ function repo_wip_rebase()
     git rebase "${BASE_BRANCH}" || return $?
     # if there are merge conflicts, resolve them and then
     repo_wip_merge "${BASE_BRANCH}"
+}
+
+function repo_committers()
+{
+    local PARENT=${1:-"main"}
+    local CURRENT_BRANCH
+    CURRENT_BRANCH=${2:-"$(git rev-parse --abbrev-ref HEAD)"}
+
+    local -A COMMITTERS
+    while read -r COMMITTER; do
+        COMMITTERS["${COMMITTER}"]=1
+    done < <(git log --format='Co-authored-by: %cn <%ce>' "${PARENT}".."${CURRENT_BRANCH}")
+    printf "%s\n" "${!COMMITTERS[@]}"
+}
+
+# mob done ->
+#   git fetch origin --prune
+#    git push --no-verify origin mob/main-evaluate-metric
+#    git checkout main
+#    git merge origin/main --ff-only
+#    git merge --squash --ff mob/main-evaluate-metric
+#    git branch -D mob/main-evaluate-metric
+#    git push --no-verify origin --delete mob/main-evaluate-metric
+function repo_squash_branch()
+{
+    local COMMIT_SUMMARY=${1:?"commit summary is required!"}
+    local PARENT=${2:-"main"}
+
+    local CURRENT_BRANCH
+    CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    echo "Squashing Current Branch '${CURRENT_BRANCH}' relative to '${PARENT}'"
+
+    local COMMIT_MSG
+    read -r -d '' COMMIT_MSG <<- EOM
+${COMMIT_SUMMARY}
+
+Squashed '${CURRENT_BRANCH}' relative to '${PARENT}'
+------------
+$(git log --format='%B%n' "${PARENT}".."${CURRENT_BRANCH}")
+------------
+$(repo_committers "${PARENT}" "${CURRENT_BRANCH}")
+
+Files Modified
+--------------
+$(git diff --name-status "${PARENT}".."${CURRENT_BRANCH}")
+
+EOM
+
+    git reset "$(git merge-base "${PARENT}" "${CURRENT_BRANCH}")" || return 2
+    git add -A
+    git commit -m "${COMMIT_MSG}"
 }
