@@ -32,7 +32,7 @@ baz_repository_images()
     done < <(baz_repository_tags "${REGISTRY}" "${REPOSITORY}")
 }
 
-function baz_images()
+function baz_images_all()
 {
     local REGISTRY="${1:-"${DEFAULT_REGISTRY}"}"
 
@@ -41,7 +41,30 @@ function baz_images()
     done < <(baz_repositories "${REGISTRY}")
 }
 
+function baz_images()
+{
+    local PATTERN="${1:-".*"}"
+    local REGISTRY="${2:-"${DEFAULT_REGISTRY}"}"
+
+    while read -r REPOSITORY; do
+        grep -E "${PATTERN}" <(baz_repository_images "${REPOSITORY}" "${REGISTRY}")
+    done < <(baz_repositories "${REGISTRY}")
+}
+
 function baz_delete_image()
+{
+    # note: 'image' does not include the repository prefix
+    # for baz_images output 'leadingagilestudios.azurecr.io/analysis/gather-example:0.4'
+    # use
+    #   baz_delete_image analysis/gather-example:0.4
+
+    local IMAGE="${1:?"requires image name:tag"}"
+    local REGISTRY="${2:-"${DEFAULT_REGISTRY}"}"
+
+    az acr repository delete --name "${REGISTRY}" --image "${IMAGE}"
+}
+
+function baz_delete_image_match()
 {
     # note: 'image' does not include the repository prefix
     # for baz_images output 'leadingagilestudios.azurecr.io/analysis/gather-example:0.4'
