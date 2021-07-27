@@ -7,6 +7,11 @@ function repo_base_dir()
     git rev-parse --show-toplevel 2>/dev/null
 }
 
+function repo_current_branch()
+{
+    git rev-parse --abbrev-ref HEAD
+}
+
 # The do_it functions apply everything on the command-line as a command in each git folder below the current one
 # I have not figured out exaclty how to execute complex things in that command
 # So:
@@ -64,7 +69,7 @@ repo_is_clean()
     #untrack files (and modified and deleted. might be redundant of the other checks)
     local count
     count=$(( $(git ls-files --other --modified  --deleted --directory --exclude-standard | wc -l) ))
-    if [[ count -ne 0 ]]; then
+    if [[ ${count} -ne 0 ]]; then
         return 3
     fi
 
@@ -182,9 +187,12 @@ function repo_wip_merge()
     git merge --ff-only wip || return $?
     git branch -d wip || return $?
 }
+
 function repo_wip_rebase()
 {
-    BASE_BRANCH=${1:-"main"}
+    BASE_BRANCH=${1:-"$(repo_current_branch)"}
+
+    git branch -D wip &> /dev/null
 
     git branch wip || return $?
     git reset --hard "origin/${BASE_BRANCH}" || return $?
@@ -198,7 +206,7 @@ function repo_committers()
 {
     local PARENT=${1:-"main"}
     local CURRENT_BRANCH
-    CURRENT_BRANCH=${2:-"$(git rev-parse --abbrev-ref HEAD)"}
+    CURRENT_BRANCH=${2:-"$(repo_current_branch)"}
 
     local -A COMMITTERS
     while read -r COMMITTER; do
@@ -221,7 +229,7 @@ function repo_squash_branch()
     local PARENT=${2:-"main"}
 
     local CURRENT_BRANCH
-    CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    CURRENT_BRANCH="$(repo_current_branch)"
     echo "Squashing Current Branch '${CURRENT_BRANCH}' relative to '${PARENT}'"
 
     local COMMIT_MSG
