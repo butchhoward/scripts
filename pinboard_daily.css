@@ -3,8 +3,20 @@
 a {color:#292929!important;padding:2px}
 a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!important;color:#FFF!important}
 
-.bookmark {
-	border: none !important;
+#pinboard {
+	text-align: left !important;
+}
+
+#content {
+	width: 80% !important;
+}
+
+#top_menu a {
+    color: #aaa !important;
+}
+#top_menu a:hover {
+    color: #eee !important;
+    background-color: #999 !important;
 }
 
 .display .when {
@@ -25,12 +37,12 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
 
 .display a.bookmark_title {color:#292929;}
 
-.display a.unread {background:#fdebbf}
+.display a.unread {background:none;}
 
 .display a.bookmark_title:hover {color:#ff0099}
 
 .display .description {
-    font:10px/12px Georgia !important;
+    font:12px Georgia !important;
     margin:5px 0;
     padding:3px !important;
     background:#EEE}
@@ -68,6 +80,16 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
     background-color: #999 !important;
 }
 
+
+/* book marks */
+
+#bookmarks .private {background:#fff!important}
+
+.bookmark {
+	border: none !important;
+}
+
+
 /* EDIT CONTROLS */
 
 #edit_bookmark_form .edit_form_input {
@@ -103,12 +125,6 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
 .star:before {content: "♥"}
 .selected_star, .star:hover {color:#cc0066!important}
 
-#bookmarks .private {background:#fff!important}
 
-#top_menu a {
-    color: #aaa !important;
-}
-#top_menu a:hover {
-    color: #eee !important;
-    background-color: #999 !important;
-}
+
+/* Tag Clound */
