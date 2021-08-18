@@ -1,0 +1,35 @@
+
+.body {
+	max-width: none;
+}
+
+.pure-u-sm-3-5 {
+	width: 90%;
+}
+
+.feedcell {
+	position: inherit;
+	height: auto;
+	width: auto;
+}
+.feedcell .art {
+	position: relative;
+	height: 0;
+	width: 0;
+	visibility: hidden;
+}
+
+.feedcell .cellcontent {
+	position: relative;
+	left: 0;
+	top: 0;
+	height: auto;
+	width: auto;
+}
+
+.feedcell .cellcontent .titlestack {
+	position: relative;
+	left: 0;
+	top: 0;
+	transform: none;
+}
