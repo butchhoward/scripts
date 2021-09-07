@@ -30,14 +30,17 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
 }
 
 .display .bookmark_title {
-    font-weight: bold;
+    font-weight: normal;
     font-size: 12px !important;
     line-height: 12px;
     margin:0 0 2px;}
 
 .display a.bookmark_title {color:#292929;}
 
-.display a.unread {background:none;}
+.display a.unread {
+    font-weight: bold;
+	background:none;
+}
 
 .display a.bookmark_title:hover {color:#ff0099}
 
