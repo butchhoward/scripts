@@ -182,21 +182,23 @@ function repo_delete_all_local_branches()
 function repo_wip_merge()
 {
     BASE_BRANCH=${1:-"main"}
+    local WIP_BRANCH="__wip__"
 
     git checkout "${BASE_BRANCH}" || return $?
-    git merge --ff-only wip || return $?
-    git branch -d wip || return $?
+    git merge --ff-only "${WIP_BRANCH}" || return $?
+    git branch -d "${WIP_BRANCH}" || return $?
 }
 
 function repo_wip_rebase()
 {
     BASE_BRANCH=${1:-"$(repo_current_branch)"}
+    local WIP_BRANCH="__wip__"
 
-    git branch -D wip &> /dev/null
+    git branch -D "${WIP_BRANCH}" &> /dev/null
 
-    git branch wip || return $?
+    git branch "${WIP_BRANCH}" || return $?
     git reset --hard "origin/${BASE_BRANCH}" || return $?
-    git checkout wip || return $?
+    git checkout "${WIP_BRANCH}" || return $?
     git rebase "${BASE_BRANCH}" || return $?
     # if there are merge conflicts, resolve them and then
     repo_wip_merge "${BASE_BRANCH}"
