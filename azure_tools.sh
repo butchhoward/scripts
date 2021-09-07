@@ -61,9 +61,11 @@ function baz_delete_image()
     local IMAGE="${1:?"requires image name:tag"}"
     local REGISTRY="${2:-"${DEFAULT_REGISTRY}"}"
 
-    az acr repository delete --name "${REGISTRY}" --image "${IMAGE}"
+    az acr repository delete --yes --name "${REGISTRY}" --image "${IMAGE}"
 }
 
+# example use:
+# $ for i in $(baz_images | grep -Ev '0\.1\.'); do baz_delete_image ${i#leadingagilestudios.azurecr.io/}; done
 function baz_delete_image_match()
 {
     # note: 'image' does not include the repository prefix
@@ -74,5 +76,5 @@ function baz_delete_image_match()
     local IMAGE="${1:?"requires image name:tag"}"
     local REGISTRY="${2:-"${DEFAULT_REGISTRY}"}"
 
-    az acr repository delete --name "${REGISTRY}" --image "${IMAGE}"
+    az acr repository delete --yes --name "${REGISTRY}" --image "${IMAGE}"
 }
