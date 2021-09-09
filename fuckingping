@@ -244,7 +244,6 @@ function fuckingping_list()
     local internet_down=0
 
     while true; do
-        # failed_count=$(ping_the_list "$@")
         ping_the_list "$@"
         failed_count=$?
 
