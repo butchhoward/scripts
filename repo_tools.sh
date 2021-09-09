@@ -15,7 +15,7 @@ function repo_current_branch()
 # The do_it functions apply everything on the command-line as a command in each git folder below the current one
 # I have not figured out exaclty how to execute complex things in that command
 # So:
-#       repo_do_it_to_all git checkout trunk
+#       repo_do_it_to_all git checkout main
 #
 # works, but something more complicated will not:
 #       repo_do_it_to_all_quietly  if ! repo_is_clean; then git status; fi;
@@ -97,7 +97,7 @@ function repo_fetch_all()
 
 function repo_update_to_branch()
 {
-    local BRANCH=${1:-"trunk"}
+    local BRANCH=${1:-"main"}
 
     git fetch --all
     if ! git show-ref --quiet --verify -- "refs/remotes/origin/${BRANCH}" ; then
@@ -108,19 +108,19 @@ function repo_update_to_branch()
     fi
  }
 
-function repo_update_to_trunk()
+function repo_update_to_main()
 {
-    repo_update_to_branch trunk
+    repo_update_to_branch main
 }
 
-function repo_update_all_to_trunk()
+function repo_update_all_to_main()
 {
-    repo_do_it_to_all repo_update_to_trunk
+    repo_do_it_to_all repo_update_to_main
 }
 
 function repo_update_all_to_branch()
 {
-    local BRANCH=${1:-"trunk"}
+    local BRANCH=${1:-"main"}
 
     repo_do_it_to_all repo_update_to_branch "${BRANCH}"
 }
@@ -163,16 +163,16 @@ function repo_prune_remote_branches()
 # It does not remove commits, so you can probably get back to the code (at least until a purge happens)
 function repo_delete_all_local_branches()
 {
-    local TRUNK_BRANCH=${1:-"trunk"}
+    local MAIN_BRANCH=${1:-"main"}
 
-    if ! git show-ref --quiet --verify -- "refs/heads/${TRUNK_BRANCH}" ; then
-        echo "'${TRUNK_BRANCH}' does not exist. It is not safe to delete all the things."
+    if ! git show-ref --quiet --verify -- "refs/heads/${MAIN_BRANCH}" ; then
+        echo "'${MAIN_BRANCH}' does not exist. It is not safe to delete all the things."
         return 1
     fi
 
-    git checkout "${TRUNK_BRANCH}"
+    git checkout "${MAIN_BRANCH}"
     for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-        if [ "$branch" != "${TRUNK_BRANCH}" ]; then
+        if [ "$branch" != "${MAIN_BRANCH}" ]; then
             git branch -D "$branch"
         fi
     done
@@ -217,14 +217,6 @@ function repo_committers()
     printf "%s\n" "${!COMMITTERS[@]}"
 }
 
-# mob done ->
-#   git fetch origin --prune
-#    git push --no-verify origin mob/main-evaluate-metric
-#    git checkout main
-#    git merge origin/main --ff-only
-#    git merge --squash --ff mob/main-evaluate-metric
-#    git branch -D mob/main-evaluate-metric
-#    git push --no-verify origin --delete mob/main-evaluate-metric
 function repo_squash_branch()
 {
     local COMMIT_SUMMARY=${1:?"commit summary is required!"}
