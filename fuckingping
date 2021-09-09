@@ -15,7 +15,7 @@ Usage:
 
         -q quiet -- does not speak status. default is to speak
 
-        -Q very Quiet -- does not log full failed status only an marker in the dots instead. 
+        -Q very Quiet -- does not log full failed status only an marker in the dots instead.
            Default is to log time and ip that failed.
 
         -d direct - use list of IP addresses given after '--'
@@ -25,7 +25,7 @@ Usage:
         -x eternal - use default list of IP address, but only the external ones
             This is useful when not using the house internet (i.e. a MiFi or some other)
 
-        -c critical addresses - define the number of IP addresses in the list to check which are critical 
+        -c critical addresses - define the number of IP addresses in the list to check which are critical
             The critical IP addresses must be at the beginning of the list
             If any one of the critical addresses fails a ping, then the remainder of the list is skipped
 
@@ -36,7 +36,7 @@ Usage:
         -v voice - use the "say" command voice name(s) specified
             The default is "Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
             If a comma-delimited string of names is used, the errors will cycle through the voices.
-            
+
 
         -F define an alternate prefix, default is "Fucking"
             to turn off the Vulgarity use -F ""
@@ -79,39 +79,61 @@ else
     IS_MACOS=false
 fi
 
-
-function speak_internet_up()
+function speak_quietly()
 {
-
-    if ! ${QUIETLY}; then
-        if ${IS_MACOS}; then
-            say --voice="${VOICES[0]}" "Internet is back up"
+    if ! ${VERY_QUIETLY}; then
+        if command -v cowsay &> /dev/null ; then
+            cowsay "$1"
         fi
     fi
 }
 
+function speak_loudly()
+{
+    if command -v say &> /dev/null ; then
+        say --voice="$1" "$2"
+    fi
+}
+
+function speak_internet_up()
+{
+    local MSG="Internet is back up"
+
+    if ${QUIETLY}; then
+        speak_quietly "${MSG}"
+        return 0
+    fi
+
+    speak_loudly "${VOICES[0]}" "${MSG}"
+}
+
 function speak_ping_fail()
 {
-    if ! ${QUIETLY}; then
-        if ${IS_MACOS}; then
-            say --voice="${VOICES[${CURRENT_VOICE}]}" "${VULGAR_PREFIX} can't ping ${1}"
-        fi
+    local MSG="${VULGAR_PREFIX} can't ping ${1}"
 
-        ((++CURRENT_VOICE))
-        if [[ "${CURRENT_VOICE}" -ge "${#VOICES[@]}" ]]; then
-            CURRENT_VOICE=0
-        fi
+    if ${QUIETLY}; then
+        speak_quietly "${MSG}"
+        return 0
+    fi
 
+    speak_loudly "${VOICES[${CURRENT_VOICE}]}" "${MSG}"
+
+    ((++CURRENT_VOICE))
+    if [[ "${CURRENT_VOICE}" -ge "${#VOICES[@]}" ]]; then
+        CURRENT_VOICE=0
     fi
 }
 
 function speak_internet_problem()
 {
-    if ! ${QUIETLY}; then
-        if ${IS_MACOS}; then
-            say --voice="${VOICES[0]}" "${VULGAR_PREFIX} $1 of $2 pings failed."
-        fi
+    local MSG="${VULGAR_PREFIX} $1 of $2 pings failed."
+
+    if ${QUIETLY}; then
+        speak_quietly "${MSG}"
+        return 0
     fi
+
+    speak_loudly "${VOICES[0]}" "${MSG}"
 }
 
 function current_wifi_adapter()
@@ -158,7 +180,7 @@ function ping_the_list()
             if ${VERY_QUIETLY}; then
                 printf "%s" "*"
             else
-                if [[ ${failed_count} -eq 0 ]]; then 
+                if [[ ${failed_count} -eq 0 ]]; then
                     printf "\n";
                 fi
 
@@ -184,8 +206,8 @@ function report_failed_internet()
     local total_count=$2
     local internet_was_down=$3
 
-    if [[ ${failed_count} -eq 0 ]]; then 
-        if [[ ${internet_was_down} -ne 0 ]]; then 
+    if [[ ${failed_count} -eq 0 ]]; then
+        if [[ ${internet_was_down} -ne 0 ]]; then
             speak_internet_up
             internet_was_down=1
         fi
@@ -216,12 +238,12 @@ function fuckingping_list()
         current_wifi_adapter
         number1_network
         date -jR
-    fi 
+    fi
 
     local failed_count=0
     local internet_down=0
 
-    while true; do 
+    while true; do
         # failed_count=$(ping_the_list "$@")
         ping_the_list "$@"
         failed_count=$?
