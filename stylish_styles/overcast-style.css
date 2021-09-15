@@ -7,6 +7,12 @@ body {
 	width: 90%;
 }
 
+.nav:after {
+	font-size: 0.8em;
+	font-weight: normal;
+	content: "Stylish Styles Applied"
+}
+
 .feedcell {
 	position: inherit;
 	height: auto;
