@@ -181,7 +181,7 @@ function repo_delete_all_local_branches()
 
 function repo_wip_merge()
 {
-    BASE_BRANCH=${1:-"main"}
+    BASE_BRANCH=${1:-"$(repo_current_branch)"}
     local WIP_BRANCH="__wip__"
 
     git checkout "${BASE_BRANCH}" || return $?
