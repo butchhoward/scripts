@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #source this script to get the useful functions
 
-function docker_rm_all()
+function bdocker_rm_all()
 {
     local MATCH_TARGET=${1}
     local FILTER=""
@@ -15,7 +15,7 @@ function docker_rm_all()
     done
 }
 
-function docker_rmi_dangling()
+function bdocker_rmi_dangling()
 {
 
     docker image ls -f "dangling=true" -q | while IFS= read -r image_id; do
@@ -29,15 +29,15 @@ function docker_rmi_dangling()
 # REPOSITORY                                       TAG
 # drydock.workiva.net/workiva/cds                  0.0.68
 #
-# docker_rmi_matching "drydock*\/*\/*"
+# bdocker_rmi_matching "drydock*\/*\/*"
 #
 # use
 # docker images --filter=reference="drydock*\/*\/*"
 # to preview the list of images that will be removed
 #
 # example:
-#    docker_rmi_matching 'gather*:*'
-function docker_rmi_matching()
+#    bdocker_rmi_matching 'gather*:*'
+function bdocker_rmi_matching()
 {
     local MATCH_TARGET=${1:?"Give me something to match!"}
 
