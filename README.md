@@ -8,13 +8,18 @@ I use these by sourcing them into the current session.
 
 I converted most of these to libraries instead of being sourced into the current session.
 
-The new apps are simple names (no `.sh`), that handle some command mapping, and use the current libraries to do the work.
+The new apps are simple names (no `.sh`) that handle some command mapping and use the current libraries to do the work.
 
-The functon in `misc.sh` are left there and are still sourced in until I figure out whether to move them to individual files or keep them as sourced functions.
+The functons in `misc.sh` are left there and are still sourced in until I figure out whether to move them to individual files or keep them as sourced functions.
+
+For all of these using the command without a subcommand, shows a list of all the subcommand available for it.
+
+The `help` subcommand is available for all of the commands and shows some documentation for each of the subcommands.
 
 
-### repo
-repo {sub-command}
+## repo
+
+`repo` functions for mananging git  repositories
 
 
 One added thing for repo is to duplicate it to `git-repo` so it can be used as a `git` command:
@@ -26,41 +31,38 @@ git repo current_branch
 
 This works because `git` uses any executable that begins with `git-` as a sub-command where the name following the dash is the sub-command name.
 
-### venv
+## venv
 
-### docker
-### azure
+`venv` functions are for managing python virtual environments
 
+* Most assume you are working in a folder that is a git repository
+* If possible, the venv is created in a folder in `../venv/<Repo Name>`. The function `venv_location()` attempts to determine the location using the current git repository.
+
+## bdocker
+
+Tools for docker images
+
+## baz
+
+Tools for the Azure cli
+
+## Libraries
+
+These are the meat of the above stand-alones.
 
 Sourcing them into the current session is still supported, but not how I am using them any more.
 
-## venv_tools.sh
-
-* `venv_*` functions are for managing python virtual environments
-
-  * Most assume you are working in a folder that is a git repository
-  * If possible, the venv is created in a folder in `../venv/<Repo Name>`. The function `venv_location()` attempts to determine the location using the current git repository.
-
-
-## repo_tools.sh
-
-* `repo_*` functions are for mananging git  repositories
-
-  * These are mostly helpful in folders that are collections of git reposiitories that relate to each other (as in for a single client)
-
-
-## docker_tools.sh
-
-Docker functions
+### venv_tools.sh
+### repo_tools.sh
+### bdocker_tools.sh
+### baz_tools.sh
 
 ## misc.sh
-
 General use functions
-
 
 ## scripts.sh
 
-A script to source all the scripts (other than the Candy scripts).
+A script to source the scripts which are not stand-alone tools.
 
 This is the one I source from my `.bash_rc` so all my terminal session have all the tools all the time.
 
