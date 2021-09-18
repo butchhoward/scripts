@@ -17,20 +17,17 @@ The functon in `misc.sh` are left there and are still sourced in until I figure 
 repo {sub-command}
 
 
-One added thing for repo is to symlink it to `get-repo` so it can be used as a `git` command:
-
-```
-ln -s ./repo git-repo
-```
+One added thing for repo is to duplicate it to `git-repo` so it can be used as a `git` command:
 
 Then use it as a `git` sub-command:
 ```
-git repo status_all
+git repo current_branch
 ```
 
 This works because `git` uses any executable that begins with `git-` as a sub-command where the name following the dash is the sub-command name.
 
 ### venv
+
 ### docker
 ### azure
 
