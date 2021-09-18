@@ -4,13 +4,13 @@
 # SC1090 -> don't try to follow sourced files
 
 
-# Moved to bhtool
+# Moved to bhtool - but moved it back later
 # from this stackoverflow answer https://stackoverflow.com/a/16178979/4787468
 # stderrred program [args]
-# function stderrred()
-# {
-#     (set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
-# }
+function stderrred()
+{
+    (set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
+}
 
 
 # from this stackoverflow answer https://stackoverflow.com/questions/370047/what-is-the-most-elegant-way-to-remove-a-path-from-the-path-variable-in-bash

@@ -4,6 +4,39 @@ I use these by sourcing them into the current session.
 
 (mostly, there are a couple of Candy scripts that I use directly.)
 
+## Non-Sourced versions
+
+I converted most of these to libraries instead of being sourced into the current session.
+
+The new apps are simple names (no `.sh`), that handle some command mapping, and use the current libraries to do the work.
+
+The functon in `misc.sh` are left there and are still sourced in until I figure out whether to move them to individual files or keep them as sourced functions.
+
+
+### repo
+repo {sub-command}
+
+
+One added thing for repo is to symlink it to `get-repo` so it can be used as a `git` command:
+
+```
+ln -s ./repo git-repo
+```
+
+Then use it as a `git` sub-command:
+```
+git repo status_all
+```
+
+This works because `git` uses any executable that begins with `git-` as a sub-command where the name following the dash is the sub-command name.
+
+### venv
+### docker
+### azure
+
+
+Sourcing them into the current session is still supported, but not how I am using them any more.
+
 ## venv_tools.sh
 
 * `venv_*` functions are for managing python virtual environments
@@ -43,4 +76,3 @@ Use the gource application to make a pretty graphic display of the commit histor
 ## fuckingping
 
 A script to report the status of the network by pinging some well-known IP addresses. This helped while I was working from home and having some network/ISP issues.
-

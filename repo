@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "${LOCATION}"/repo_tools.sh
+
+BASE_COMMAND="repo"
+
+function list_commands()
+{
+    declare -F | grep -Eo "${BASE_COMMAND}_.*" | sed "s/^${BASE_COMMAND}_"// | sort | column
+}
+
+if [ $# -eq 0 ]; then
+    list_commands "${BASE_COMMAND}"
+    exit 0
+fi
+
+cmd="${1}" ; shift
+
+"${BASE_COMMAND}_${cmd}" "$@"
