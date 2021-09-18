@@ -4,50 +4,47 @@
 # SC1090 -> don't try to follow sourced files
 
 
-# Assumes you have installed the various Python versions to be used by way of pyenv
-#       brew install pyenv
-# List the Python version pyenv can manage
-#       pyenv install --list
-# Install one
-#       pyenv install 3.6.0
-# Show the ones installed
-#       pyenv versions
+function _venv_help()
+{
+    echo
+    echo "Manage virtual environments for Python"
+    echo
+    echo "Assumes you are working in a git repository."
+    echo
+    echo "Assumes you have installed the various Python versions to be used by way of pyenv"
+    echo "      brew install pyenv"
+    echo "List the Python version pyenv can manage"
+    echo "      pyenv install --list"
+    echo "Install one"
+    echo "      pyenv install 3.6.0"
+    echo "Show the ones installed"
+    echo "      pyenv versions"
+    echo
+    echo "If you are going to use any Python 2.x versions, you must have installed virtualenv tools at the global level"
+    echo "  pip install virtualenv virtualenvwrapper"
+}
 
-# This is what I had to use to install Python 2.7.13 on MacOS 10.13.6
-# CFLAGS="-I$(xcrun --show-sdk-path)/usr/include -I$(brew --prefix openssl)/include" LDFLAGS="-L$(brew --prefix openssl)/lib" pyenv install 2.7.13
+function _venv_def_py_help()
+{
+    echo "Show the default version of Python to be used when a specific version is not given."
+}
 
-# If you are going to use any Python 2.x versions, you must have installed virtualenv tools at the global level
-#   pip install virtualenv virtualenvwrapper
-
-venv_def_py()
+function venv_def_py()
 {
     pyenv versions | sed 's/^  //g' | sed 's/^* //g' | sed 's/(.*$//g' | sed 's/ *$//' | grep '^\d' | tail -1
 }
 
-venv_newest_py()
+function venv_newest_py()
 {
     pyenv install --list | sed 's/^  //' | grep '^\d' | grep --invert-match 'dev\|a\|b' | tail -1
 }
 
-function venv_help()
+function _venv_location_help()
 {
-    echo ""
-    echo "venv_rebuild requirements_file py_version venv_location"
-    echo "      requirements_file defaults to './requirements.txt'"
-    echo "      py_version defaults to '$(venv_def_py)'"
-    echo "      venv_location defaults to computed (../.venv/<git repo name>): '$(venv_location)'"
-    echo ""
-    echo ""
-    echo "venv_activate"
-    echo ""
-    echo "venv_deactivate"
-    echo ""
-    echo "venv_pip_requirements requirements_file"
-    echo "      file defaults to ./requirements.txt"
-    echo ""
-    echo "venv_pip_upgrade"
+    echo "Show the default location of the venv being used for the current repostory."
+    echo "The location of is one folder level above the repository base directory"
+    echo "    in a folder name '.venv/<repostory name>'"
 }
-
 
 function venv_location()
 {
@@ -72,6 +69,11 @@ function venv_deactivate()
     ! type -t deactivate &> /dev/null || deactivate
 }
 
+function _venv_is_a_venv_help()
+{
+    echo "venv is_a_venv <venv_folder>"
+}
+
 function venv_is_a_venv()
 {
     local location
@@ -84,6 +86,12 @@ function venv_is_a_venv()
         return 0
     fi
     return 1
+}
+
+function _venv_remove_help()
+{
+    echo "venv remove [venv_folder]"
+    echo "  if venv_folder is not given, the default location will be used."
 }
 
 function venv_remove()
@@ -100,7 +108,15 @@ function venv_remove()
     if [[ -d "${locationp2}" ]]; then
         rmvirtualenv "${location##*/}"
     fi
-    }
+}
+
+function _venv_create_help()
+{
+    echo "venv create [python_version] [venv_location]"
+    echo "  Creates a venv for the current repository"
+    echo "  If python_version is not given, uses the default version."
+    echo "  If venv_location is not given, uses the default location."
+}
 
 function venv_create()
 {
@@ -124,6 +140,13 @@ function venv_create()
     fi
 }
 
+function _venv_activate_help()
+{
+    echo "venv activate [venv_folder]"
+    echo "  If venv_folder is not given, the default location will be used."
+    echo "  Note that using a non-default location will require that it be used in other commands."
+}
+
 function venv_activate()
 {
     venv_deactivate
@@ -138,13 +161,28 @@ function venv_activate()
 
 function venv_pip_requirements()
 {
+    echo "venv pip_requirements [requirements_file]"
+    echo "  If the file name is not given, ./requirements.txt will be used."
+}
+function venv_pip_requirements()
+{
     local requirements_file=${1:-"requirements.txt"}
     echo "REQUIREMENTS: ${requirements_file}"
     if [ -a "${requirements_file}" ]; then
         pip install --upgrade -r "${requirements_file}"
     else
         echo "Could not pip the requirments file: '${requirements_file}'"
+        return 1
     fi
+}
+
+function _venv_rebuild_help()
+{
+    echo "venv rebuild [requirements_file] [python_version] [venv_location]"
+    echo "  requirements_file defaults to 'requirements_dev.txt, if it exists"
+    echo "      else it defaults to requirements.txt"
+    echo "  python_version defaults to the default python version"
+    echo "  venv_location defaults to the default venv location"
 }
 
 function venv_rebuild()
@@ -163,4 +201,3 @@ function venv_rebuild()
     venv_pip_upgrade
     venv_pip_requirements "${requirements_file}"
 }
-

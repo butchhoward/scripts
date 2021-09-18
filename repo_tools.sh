@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #source this script to get the useful functions
 
+function _repo_help()
+{
+    echo "Tools to handle common git repository tasks"
+}
 
 function repo_base_dir()
 {
@@ -12,21 +16,19 @@ function repo_current_branch()
     git rev-parse --abbrev-ref HEAD
 }
 
-# The do_it functions apply everything on the command-line as a command in each git folder below the current one
-# I have not figured out exaclty how to execute complex things in that command
-# So:
-#       repo_do_it_to_all git checkout main
-#
-# works, but something more complicated will not:
-#       repo_do_it_to_all_quietly  if ! repo_is_clean; then git status; fi;
-
-# will fail
-#
-# You can work around this by putting complicated things in a function and using the function
-#       function do_this() { if ! repo_is_clean; then git status; fi; }
-#       repo_do_it_to_all_quietly do_this
-#
-# (anything more complicated than that should be scripted on its own)
+function _repo_do_it_to_all_help()
+{
+    echo "The do_it functions apply everything on the command-line as a command in each git folder below the current one"
+    echo "I have not figured out exaclty how to execute complex things in that command"
+    echo "So:"
+    echo "      repo_do_it_to_all git checkout main"
+    echo
+    echo "works, but something more complicated will not:"
+    echo "      repo_do_it_to_all_quietly  if ! repo_is_clean; then git status; fi;"
+    echo "will fail"
+    echo
+    echo "(anything more complicated than that should be scripted on its own)"
+}
 
 function repo_do_it_to_all()
 {
@@ -41,6 +43,11 @@ function repo_do_it_to_all()
     done
 }
 
+function _repo_do_it_to_all_quietly_help()
+{
+    echo "Same as 'do_it_to_all' except without the separator text between."
+}
+
 function repo_do_it_to_all_quietly()
 {
     for d in ./*;do
@@ -50,6 +57,11 @@ function repo_do_it_to_all_quietly()
             popd &> /dev/null || exit 1
         fi;
     done
+}
+
+function _repo_do_it_to_all_very_quietly_help()
+{
+    echo "Same as 'do_it_to_all_quietly' except with _all_ command output sent to the bit bucket."
 }
 
 function repo_do_it_to_all_very_quietly()
@@ -63,7 +75,16 @@ function repo_do_it_to_all_very_quietly()
     done
 }
 
-repo_is_clean()
+function _repo_is_clean_help()
+{
+    echo "Attempt to report whether there are no untracked, unstaged, and uncommitted files"
+    echo "returns 3 if untracked files are present"
+    echo "returns 2 if uncommitted changes are present"
+    echo "returns 1 if unstaged changes are present"
+    echo "returns o if the repository appears clean"
+}
+
+function repo_is_clean()
 {
 
     #untrack files (and modified and deleted. might be redundant of the other checks)
@@ -93,6 +114,13 @@ repo_is_clean()
 function repo_fetch_all()
 {
     repo_do_it_to_all "git fetch --all"
+}
+
+function _repo_update_to_branch_help()
+{
+    echo "repo update_to_branch [branch_name]"
+    echo "  Perform a hard reset to the origin branch matching the current branch."
+    echo "  branch_name defaults to 'main'"
 }
 
 function repo_update_to_branch()
@@ -130,6 +158,14 @@ function repo_status_all()
     repo_do_it_to_all git status
 }
 
+function _repo_clean_fdx_help()
+{
+    echo "repo clean_fdx [...]"
+    echo "  Deep clean repository excluding common things that are nice to keep around"
+    echo "  If no arguments are given, the defaults will preserve .vscode and .idea folders"
+    echo "  If arguments are given, exactly those will be pass to 'git clean --fdx'"
+}
+
 function repo_clean_fdx()
 {
     local -a EXTRA_ARGS
@@ -152,6 +188,11 @@ function repo_clean_fdx_all()
     repo_do_it_to_all "git clean -fdx ${EXTRA_ARGS[*]}"
 }
 
+function _repo_prune_remote_branches_help()
+{
+    echo "Remove any local tracking branches from branches that have been deleted from remotes."
+}
+
 function repo_prune_remote_branches()
 {
     for remote_name in $(git remote); do
@@ -159,8 +200,16 @@ function repo_prune_remote_branches()
     done
 }
 
-# Have a care, this deletes them ALL it does not check whether they have been pushed or merged.
-# It does not remove commits, so you can probably get back to the code (at least until a purge happens)
+function _repo_delete_all_local_branches_help()
+{
+    echo "repo delete_all_local_branches [branch_name]"
+    echo "  Change to the branch and delete ALL other local branches."
+    echo "  branch_name defaults to 'main'"
+    echo
+    echo "** Have a care, this deletes them ALL it does not check whether they have been pushed or merged. **"
+    echo "** It does not remove commits, so you can probably get back to the code (at least until a purge happens) **"
+}
+
 function repo_delete_all_local_branches()
 {
     local MAIN_BRANCH=${1:-"main"}
@@ -179,29 +228,76 @@ function repo_delete_all_local_branches()
     repo_prune_remote_branches
 }
 
+WIP_BRANCH='__wip__'
+
+function _repo_wip_merge_help()
+{
+    echo "repo wip_merge [branch]"
+    echo "  branch defaults to the current branch"
+    echo
+    echo "  Merge pending changes in the '${WIP_BRANCH}' branch into the branch named."
+    echo "  Such changes usually happen after a rebase where there were conflicts to resolve."
+}
+
 function repo_wip_merge()
 {
     BASE_BRANCH=${1:-"$(repo_current_branch)"}
-    local WIP_BRANCH="__wip__"
 
     git checkout "${BASE_BRANCH}" || return $?
     git merge --ff-only "${WIP_BRANCH}" || return $?
     git branch -d "${WIP_BRANCH}" || return $?
 }
 
+function _repo_wip_rebase_help()
+{
+    echo "repo wip_rebase [branch]"
+    echo "  branch defaults to the current branch"
+    echo
+    echo "  Rebase changes in the current working branch onto the named branch"
+    echo "  This is usually used when working on a branch that had changes pushed to origin"
+    echo "      by someone else working on the same branch. This will combine the changes to the"
+    echo "      branch without leaving a merge-commit (i.e. keeping the branch history a straight line)"
+    echo "  If the rebase step has merge conflicts, resolve those in the normal way using"
+    echo "      git rebase mergetool"
+    echo "      git rebase --continue"
+    echo "  then use"
+    echo "      repo wip_merge"
+    echo "  to complete the work started by 'repo wip_rebase'"
+    echo "      (wip_rebase uses '${WIP_BRANCH}' to process the rebase)"
+}
+
 function repo_wip_rebase()
 {
     BASE_BRANCH=${1:-"$(repo_current_branch)"}
-    local WIP_BRANCH="__wip__"
 
+    # create the wip branch from the current HEAD
     git branch -D "${WIP_BRANCH}" &> /dev/null
-
     git branch "${WIP_BRANCH}" || return $?
+
+    # reset the current branch to origin/[branch]
     git reset --hard "origin/${BASE_BRANCH}" || return $?
+
+    # change to the wip branch and rebase wip (which has all the new changes) onto the working branch (which has been reset)
     git checkout "${WIP_BRANCH}" || return $?
-    git rebase "${BASE_BRANCH}" || return $?
-    # if there are merge conflicts, resolve them and then
+    if ! git rebase "${BASE_BRANCH}"; then
+        r=$?
+        echo "Resolve all conflicts then 'repo wip merge' to complete"
+        return $r
+    fi
+
+    # merge the rebased changes into the base branch for a clean merge line
+    # if there are merge conflicts, you will have to resolve them and do the wip_merge separately
     repo_wip_merge "${BASE_BRANCH}"
+}
+
+function _repo_committers_help()
+{
+    echo "repo committers [parent_branch] [working_branch]"
+    echo "  parent_branch defaults to 'main'"
+    echo "  working_branch defaults to the current branch"
+    echo
+    echo "Lists all committers for commits changes between the two branches"
+    echo "  in the Github 'Co-authored-by' format"
 }
 
 function repo_committers()
@@ -215,6 +311,19 @@ function repo_committers()
         COMMITTERS["${COMMITTER}"]=1
     done < <(git log --format='Co-authored-by: %cn <%ce>' "${PARENT}".."${CURRENT_BRANCH}")
     printf "%s\n" "${!COMMITTERS[@]}"
+}
+
+function _repo_squash_branch_help()
+{
+    echo "repo squash_branch <message> [parent_branch]"
+    echo "  message is required (should be quoted if it is more than one word)"
+    echo "  parent_branch defaults to main"
+    echo
+    echo "Squash all commits since diverging from the parent branch"
+    echo "  Add all commit messages to the commit message for the squashed commit"
+    echo "  Add all Co-authors to the commit message"
+    echo "  Add a list of all files changed to the commit message"
+    echo "(there is no editing of this before it is committed)"
 }
 
 function repo_squash_branch()
