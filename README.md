@@ -16,6 +16,19 @@ For all of these using the command without a subcommand, shows a list of all the
 
 The `help` subcommand is available for all of the commands and shows some documentation for each of the subcommands.
 
+### Bash Profile
+
+Add these lines to the `.bash_profile` or `.bashrc` to set the path and to enable (simple) auto complete for the commands:
+
+```shell
+#bhtools
+BHTOOLS_PATH="$HOME/projects/bh/scripts"
+if [ -f "${BHTOOLS_PATH}/scripts.sh" ]; then source "${BHTOOLS_PATH}/scripts.sh"; fi
+export PATH="${BHTOOLS_PATH}/scripts:$PATH"
+
+source "${BHTOOLS_PATH}/b_autocomplete.sh"
+```
+
 
 ## repo
 

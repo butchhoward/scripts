@@ -49,7 +49,7 @@ else
 fi
 
 if [ $# -eq 0 ]; then
-    subcommand_list_columns "${BASE_COMMAND}"
+    subcommand_list "${BASE_COMMAND}"
     exit 0
 fi
 
