@@ -3,7 +3,6 @@
 # shellcheck disable=SC1090
 # SC1090 -> don't try to follow sourced files
 
-
 function _venv_help()
 {
     echo
@@ -63,10 +62,16 @@ function venv_pip_upgrade()
     pip install wheel
 }
 
-function venv_deactivate()
+
+function _venv_deactivate()
 {
+    if type -t venv_deactivate >&2 /dev/null; then
+        venv_deactivate
+        return $?
+    fi
+
     # this works for both venv and virtualenv
-    ! type -t deactivate &> /dev/null || deactivate
+    ! type -t deactivate >&2 /dev/null || deactivate
 }
 
 function _venv_is_a_venv_help()
@@ -99,7 +104,7 @@ function venv_remove()
     local location
     local location=${1:-$(venv_location)}
 
-    venv_deactivate
+    _venv_deactivate
 
     if [[ -d "${location}" && -e "${location}/bin/activate" ]]; then
             rm -rf "${location}"
@@ -123,7 +128,7 @@ function venv_create()
     local version="${1:-$(venv_def_py)}"
     local location=${2:-$(venv_location)}
 
-    venv_deactivate
+    _venv_deactivate
     venv_remove "${location}"
 
     if [ ! -a "${location}" ]; then
@@ -147,9 +152,14 @@ function _venv_activate_help()
     echo "  Note that using a non-default location will require that it be used in other commands."
 }
 
-function venv_activate()
+function _venv_activate()
 {
-    venv_deactivate
+    if type -t venv_activate >&2 /dev/null; then
+        venv_activate
+        return $?
+    fi
+
+    _venv_deactivate
     local location="${1:-$(venv_location)}"
     local activate_script="${location}"/bin/activate
     if [ -r "${activate_script}" ]; then
@@ -197,7 +207,7 @@ function venv_rebuild()
     fi
 
     venv_create "${version}" "${location}"
-    venv_activate "${location}"
+    _venv_activate "${location}"
     venv_pip_upgrade
     venv_pip_requirements "${requirements_file}"
 }
