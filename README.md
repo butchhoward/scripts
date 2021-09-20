@@ -24,7 +24,7 @@ Add these lines to the `.bash_profile` or `.bashrc` to set the path and to enabl
 #bhtools
 BHTOOLS_PATH="$HOME/projects/bh/scripts"
 if [ -f "${BHTOOLS_PATH}/scripts.sh" ]; then source "${BHTOOLS_PATH}/scripts.sh"; fi
-export PATH="${BHTOOLS_PATH}/scripts:$PATH"
+export PATH="${BHTOOLS_PATH}:$PATH"
 
 source "${BHTOOLS_PATH}/b_autocomplete.sh"
 ```
