@@ -21,6 +21,25 @@ function _venv_help()
     echo
     echo "If you are going to use any Python 2.x versions, you must have installed virtualenv tools at the global level"
     echo "  pip install virtualenv virtualenvwrapper"
+    echo
+
+    if REPO="$(git rev-parse --show-toplevel 2>/dev/null)" ; then
+        echo "Current folder is a git repository: '${REPO}'"
+    else
+        echo "The current folder is NOT a git repository"
+    fi
+
+    if venv_is_a_venv "$(venv_location)"; then
+        echo "Current venv is: $(venv_location)"
+        if [ -v VIRTUAL_ENV ]; then
+            echo "venv is Active"
+        else
+            echo "venv is not Active"
+        fi
+    else
+        echo "Current repository does not have a venv"
+    fi
+
 }
 
 function _venv_def_py_help()
