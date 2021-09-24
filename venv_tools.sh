@@ -62,16 +62,22 @@ function venv_pip_upgrade()
     pip install wheel
 }
 
+function _venv_deactivate_help()
+{
+    echo "venv_deactivate"
+    echo "  Deactivate the virtual environment"
+    echo "Note: you must use 'venv_deactivate' directly instead of via the venv tool."
+}
 
 function _venv_deactivate()
 {
-    if type -t venv_deactivate >&2 /dev/null; then
+    if type -t venv_deactivate &> /dev/null; then
         venv_deactivate
         return $?
     fi
 
     # this works for both venv and virtualenv
-    ! type -t deactivate >&2 /dev/null || deactivate
+    ! type -t deactivate &> /dev/null || deactivate
 }
 
 function _venv_is_a_venv_help()
@@ -147,9 +153,10 @@ function venv_create()
 
 function _venv_activate_help()
 {
-    echo "venv activate [venv_folder]"
+    echo "venv_activate [venv_folder]"
     echo "  If venv_folder is not given, the default location will be used."
     echo "  Note that using a non-default location will require that it be used in other commands."
+    echo "Note: you must use 'venv_activate' directly instead of via the venv tool."
 }
 
 function _venv_activate()

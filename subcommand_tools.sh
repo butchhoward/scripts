@@ -17,24 +17,30 @@ function subcommand_list_columns()
 function subcommand_help()
 {
     local BASE_COMMAND="${1}"
+    local SUB_COMMAND="${2}"
 
-    local HELP_FUNCTION="_${BASE_COMMAND}_help"
-    if type -t "${HELP_FUNCTION}" &> /dev/null; then
-        "${HELP_FUNCTION}"
-        echo
-    fi
-
-    while read -r SUB_CMD; do
-        local HELP_FUNCTION="_${BASE_COMMAND}_${SUB_CMD}_help"
-        echo "* ${SUB_CMD}"
-        if type -t  "${HELP_FUNCTION}" &> /dev/null; then
-            echo
+    if [ -z "${SUB_COMMAND}" ]; then
+        local HELP_FUNCTION="_${BASE_COMMAND}_help"
+        if type -t "${HELP_FUNCTION}" &> /dev/null; then
             "${HELP_FUNCTION}"
-            echo "---------------------------------------"
+            echo
         fi
-        echo
-    done < <(subcommand_list "${BASE_COMMAND}")
 
+        echo "These are the available sub-commands:"
+        echo
+
+        subcommand_list "${BASE_COMMAND}" | column
+
+        echo
+        echo "Use '${BASE_COMMAND} help <sub-command>' for help on a specific command."
+        echo
+    else
+        local HELP_FUNCTION="_${BASE_COMMAND}_${SUB_COMMAND}_help"
+        if type -t "${HELP_FUNCTION}" &> /dev/null; then
+            "${HELP_FUNCTION}"
+            echo
+        fi
+    fi
     return 0
 }
 
@@ -58,7 +64,7 @@ shift
 
 case "${SUB_CMD}" in
     help|-h|-?)
-        subcommand_help "${BASE_COMMAND}"
+        subcommand_help "${BASE_COMMAND}" "$@"
         exit 0
         ;;
 esac
