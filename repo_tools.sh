@@ -228,20 +228,23 @@ function repo_delete_all_local_branches()
     repo_prune_remote_branches
 }
 
-WIP_BRANCH='__wip__'
+DEFAULT_WIP_BRANCH='__wip__'
 
 function _repo_wip_merge_help()
 {
-    echo "repo wip_merge [branch]"
+    echo "repo wip_merge [branch] [wip_branch]"
     echo "  branch defaults to the current branch"
+    echo "  wip_branch defaults to the ${DEFAULT_WIP_BRANCH} branch"
     echo
-    echo "  Merge pending changes in the '${WIP_BRANCH}' branch into the branch named."
-    echo "  Such changes usually happen after a rebase where there were conflicts to resolve."
+    echo "  Merge pending changes in 'wip_branch' into 'branch'."
+    echo "  If successful, delete 'wip_branch'."
+    echo "  When changes happen after a rebase where there were conflicts to resolve, the pending changes will be in '${DEFAULT_WIP_BRANCH}'."
 }
 
 function repo_wip_merge()
 {
-    BASE_BRANCH=${1:-"$(repo_current_branch)"}
+    local BASE_BRANCH=${1:-"$(repo_current_branch)"}
+    local WIP_BRANCH=${2:-"${DEFAULT_WIP_BRANCH}"}
 
     git checkout "${BASE_BRANCH}" || return $?
     git merge --ff-only "${WIP_BRANCH}" || return $?
@@ -263,25 +266,25 @@ function _repo_wip_rebase_help()
     echo "  then use"
     echo "      repo wip_merge"
     echo "  to complete the work started by 'repo wip_rebase'"
-    echo "      (wip_rebase uses '${WIP_BRANCH}' to process the rebase)"
+    echo "      (wip_rebase uses '${DEFAULT_WIP_BRANCH}' to process the rebase)"
 }
 
 function repo_wip_rebase()
 {
-    BASE_BRANCH=${1:-"$(repo_current_branch)"}
+    local BASE_BRANCH=${1:-"$(repo_current_branch)"}
 
     # create the wip branch from the current HEAD
-    git branch -D "${WIP_BRANCH}" &> /dev/null
-    git branch "${WIP_BRANCH}" || return $?
+    git branch -D "${DEFAULT_WIP_BRANCH}" &> /dev/null
+    git branch "${DEFAULT_WIP_BRANCH}" || return $?
 
     # reset the current branch to origin/[branch]
     git reset --hard "origin/${BASE_BRANCH}" || return $?
 
     # change to the wip branch and rebase wip (which has all the new changes) onto the working branch (which has been reset)
-    git checkout "${WIP_BRANCH}" || return $?
+    git checkout "${DEFAULT_WIP_BRANCH}" || return $?
     if ! git rebase "${BASE_BRANCH}"; then
         r=$?
-        echo "Resolve all conflicts then 'repo wip merge' to complete"
+        echo "Resolve all conflicts then 'repo wip_merge ${BASE_BRANCH}' to complete"
         return $r
     fi
 
@@ -326,6 +329,14 @@ function _repo_squash_branch_help()
     echo "(there is no editing of this before it is committed)"
 }
 
+function repo_get_squash_summary()
+{
+    local PARENT=${1:?"parent branch for compare is required"}
+    local CURRENT_BRANCH=${2:?"working branch for compare is required"}
+
+    git log --format='%B%n' "${PARENT}".."${CURRENT_BRANCH}"
+}
+
 function repo_squash_branch()
 {
     local COMMIT_SUMMARY=${1:?"commit summary is required!"}
@@ -333,6 +344,7 @@ function repo_squash_branch()
 
     local CURRENT_BRANCH
     CURRENT_BRANCH="$(repo_current_branch)"
+
     echo "Squashing Current Branch '${CURRENT_BRANCH}' relative to '${PARENT}'"
 
     local COMMIT_MSG
@@ -341,7 +353,7 @@ ${COMMIT_SUMMARY}
 
 Squashed '${CURRENT_BRANCH}' relative to '${PARENT}'
 ------------
-$(git log --format='%B%n' "${PARENT}".."${CURRENT_BRANCH}")
+$(repo_get_squash_summary "${PARENT}" "${CURRENT_BRANCH}")
 ------------
 $(repo_committers "${PARENT}" "${CURRENT_BRANCH}")
 
