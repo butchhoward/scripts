@@ -18,6 +18,9 @@ Usage:
         -Q very Quiet -- does not log full failed status only an marker in the dots instead.
            Default is to log time and ip that failed.
 
+        -u Annouce Up -- speaks internet up and down messages even if q or Q are used (only summary message
+            when state changes instead of all ping failures)
+
         -d direct - use list of IP addresses given after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
@@ -110,7 +113,7 @@ function speak_internet_up()
 {
     local MSG="Internet is back up"
 
-    if ${QUIETLY}; then
+    if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
         return 0
     fi
@@ -139,7 +142,7 @@ function speak_internet_problem()
 {
     local MSG="${VULGAR_PREFIX} $1 of $2 pings failed."
 
-    if ${QUIETLY}; then
+    if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
         return 0
     fi
@@ -304,8 +307,9 @@ LIST_DELAY=10
 PING_WAIT=
 VULGAR_PREFIX="Fucking"
 CRITICAL_IPS=0
+ANNOUCE_UP=false
 
-while getopts "hqQdxF:v:w:W:c:" opt; do
+while getopts "hqQdxuF:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -329,6 +333,8 @@ while getopts "hqQdxF:v:w:W:c:" opt; do
     W)  PING_WAIT="${OPTARG}"
         ;;
     c)  critical_ips_opt="${OPTARG}"
+        ;;
+    u) ANNOUCE_UP=true
         ;;
     esac
 done
