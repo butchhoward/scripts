@@ -140,7 +140,7 @@ function speak_ping_fail()
 
 function speak_internet_problem()
 {
-    local MSG="${VULGAR_PREFIX} $1 of $2 pings failed."
+    local MSG="${VULGAR_PREFIX} internet might be down. $1 of $2 pings failed."
 
     if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
@@ -220,19 +220,21 @@ function report_failed_internet()
 {
     local failed_count=$1
     local total_count=$2
-    local internet_was_down=$3
+    local internet_down=$3
 
     if [[ ${failed_count} -eq 0 ]]; then
-        if [[ ${internet_was_down} -ne 0 ]]; then
+        if [[ ${internet_down} -ne 0 ]]; then
             speak_internet_up
-            internet_was_down=1
+            internet_down=0
         fi
     else
-        internet_was_down=0
-        speak_internet_problem "${failed_count}" "${total_count}"
+        if [[ ${internet_down} -eq 0 ]]; then
+            internet_down=1
+            speak_internet_problem "${failed_count}" "${total_count}"
+        fi
     fi
 
-    return ${internet_was_down}
+    return ${internet_down}
 }
 
 function report_opts()
@@ -270,7 +272,8 @@ function fuckingping_list()
 
         printf "%s" "+"
 
-        internet_down=$(report_failed_internet "${failed_count}" "$#" "${internet_down}")
+        report_failed_internet "${failed_count}" "$#" ${internet_down}
+        internet_down=$?
 
         sleep "${LIST_DELAY}"
     done
