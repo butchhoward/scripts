@@ -224,11 +224,18 @@ function report_failed_internet()
 
     if [[ ${failed_count} -eq 0 ]]; then
         if [[ ${internet_down} -ne 0 ]]; then
+            if ${QUIETLY}; then
+                printf "%s" '↑'
+            fi
+
             speak_internet_up
             internet_down=0
         fi
     else
         if [[ ${internet_down} -eq 0 ]]; then
+            if ${QUIETLY}; then
+                printf "%s" '↓'
+            fi
             internet_down=1
             speak_internet_problem "${failed_count}" "${total_count}"
         fi
@@ -282,7 +289,7 @@ function fuckingping_list()
 
 function fuckingping_default()
 {
-    fuckingping_list  "router:10.10.1.1" "access point:10.10.1.254" "cable modem:73.106.96.162" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    fuckingping_list  "router:10.10.1.1" "access point:10.10.1.254" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
 }
 
 function fuckingping_default_external()
