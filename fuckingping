@@ -229,11 +229,12 @@ function ping_the_list()
                 if [[ ${failed_count} -eq 0 ]]; then
                     printf "\n";
                 fi
-                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip_name:-"${ip}"}" "$(date -jR)"
+                what_failed="${ip_name:-"${ip}"} ${ip:-"(${ip})"}"
+                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${what_failed}" "$(date -jR)"
             fi
 
             ((++failed_count))
-            speak_ping_fail "${ip_name}"
+            speak_ping_fail "${ip_name:-"${ip}"}"
 
             ((++ip_index))
             if [[ ${ip_index} -lt ${CRITICAL_IPS} ]]; then
@@ -264,7 +265,7 @@ function report_failed_internet()
             if [ ${failed_count} -gt ${MAX_IPS} ] || [ ${failed_count} -eq "${total_count}" ]; then
                 printf "%s" '↓'
                 internet_down=1
-                failed_count=$(( ${failed_count} > ${MAX_IPS} ? ${MAX_IPS}-${failed_count} : ${failed_count} ))
+                failed_count=$(( ${failed_count} > ${MAX_IPS} ? ${failed_count}-${MAX_IPS} : ${failed_count} ))
                 speak_internet_problem "${failed_count}" "${total_count}"
             fi
         fi
@@ -318,19 +319,25 @@ function fuckingping_list()
 
 function fuckingping_default()
 {
+    local -a ips
+    ips=("router:10.10.1.1")
     CRITICAL_IPS=2 # at least the home router and xfinity DNS
+
     CABLE_ROUTER_IP=$(cable_router_ip)
     if [ -n "${CABLE_ROUTER_IP}" ]; then
-        CABLE_ROUTER_IP=" cable router:${CABLE_ROUTER_IP}" # note the space here and the formatting below!
+        ips+=("cable router:${CABLE_ROUTER_IP}")
         CRITICAL_IPS=3
     fi
 
-    fuckingping_list  "router:10.10.1.1${CABLE_ROUTER_IP}" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    ips+=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+    fuckingping_list "${ips[@]}"
 }
 
 function fuckingping_default_external()
 {
-    fuckingping_list "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    local -a ips
+    ips=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+    fuckingping_list "${ips[@]}"
 }
 
 
