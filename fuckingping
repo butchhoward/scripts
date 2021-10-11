@@ -26,7 +26,8 @@ Usage:
             and several public DNS servers
         
         -D Dig for cable router external IP address. Defaults to false: use config file if it exists. 
-            (adds a few-second delay to start up)
+            (dig adds a few-second delay to start up.) 
+            (To be perverse: -DD disables both dig and the config file use.)
 
         -x eternal - use default list of IP address, but only the external ones
             This is useful when not using the house internet (i.e. a MiFi or some other)
@@ -100,13 +101,13 @@ function cable_router_ip()
     local IP
     local router_file="${HOME}"/.f-ingping/cable_router_ip.txt
     
-    # this adds a delay I am not happy with, but...
-    if ! ${DIG_LOCAL} || ! IP=$(dig +short myip.opendns.com @resolver1.opendns.com 2> /dev/null); then
-        if [ -f "${router_file}" ]; then
+    # this adds a delay when the internet is bad I am not happy with, but...
+    if ${DIG_LOCAL} && IP=$(dig +short myip.opendns.com @resolver1.opendns.com 2> /dev/null); then
+        echo "${IP}" > "${router_file}"
+    else
+        if ${USE_CONFIG_FILE} && test -f "${router_file}"; then
             IP=$(cat "${router_file}")
         fi
-    else
-        echo "${IP}" > "${router_file}"
     fi
 
     echo "${IP}"
@@ -274,20 +275,6 @@ function report_failed_internet()
     return ${internet_down}
 }
 
-function report_opts()
-{
-    echo "QUIETLY=${QUIETLY}"
-    echo "VERY_QUIETLY=${VERY_QUIETLY}"
-    echo "ANNOUCE_UP=${ANNOUCE_UP}"
-    echo "VOICE_LIST=${VOICE_LIST}"
-    echo "COMMAND=${COMMAND}"
-    echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
-    echo "LIST_DELAY=${LIST_DELAY}"
-    echo "PING_WAIT=${PING_WAIT}"
-    echo "CRITICAL_IPS=${CRITICAL_IPS}"
-    echo "DIG_LOCAL=${DIG_LOCAL}"
-}
-
 
 function fuckingping_list()
 {
@@ -341,7 +328,20 @@ function fuckingping_default_external()
 }
 
 
-OPTIND=1
+function report_opts()
+{
+    echo "QUIETLY=${QUIETLY}"
+    echo "VERY_QUIETLY=${VERY_QUIETLY}"
+    echo "ANNOUCE_UP=${ANNOUCE_UP}"
+    echo "VOICE_LIST=${VOICE_LIST}"
+    echo "COMMAND=${COMMAND}"
+    echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
+    echo "LIST_DELAY=${LIST_DELAY}"
+    echo "PING_WAIT=${PING_WAIT}"
+    echo "CRITICAL_IPS=${CRITICAL_IPS}"
+    echo "DIG_LOCAL=${DIG_LOCAL}"
+    echo "USE_CONFIG_FILE=${USE_CONFIG_FILE}"
+}
 
 QUIETLY=false
 VERY_QUIETLY=false
@@ -354,7 +354,10 @@ VULGAR_PREFIX="Fucking"
 CRITICAL_IPS=0
 ANNOUCE_UP=false
 DIG_LOCAL=false
+USE_CONFIG_FILE=true
 
+
+OPTIND=1
 while getopts "hqQdDxuF:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
@@ -380,9 +383,14 @@ while getopts "hqQdDxuF:v:w:W:c:" opt; do
         ;;
     c)  CRITICAL_IPS="${OPTARG}"
         ;;
-    u) ANNOUCE_UP=true
+    u)  ANNOUCE_UP=true
         ;;
-    D) DIG_LOCAL=true
+    D)  if ${DIG_LOCAL}; then
+            DIG_LOCAL=false
+            USE_CONFIG_FILE=false
+        else
+            DIG_LOCAL=true
+        fi
         ;;
     esac
 done
@@ -396,7 +404,7 @@ shift $((OPTIND-1))
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
 
 if ! ${VERY_QUIETLY}; then
-    echo "Trying to fucking ping some IP addresses to check internet connectivity"
+    echo "Trying to ${VULGAR_PREFIX} Ping some IP addresses to check internet connectivity"
 fi
 
 if ! ${QUIETLY}; then
