@@ -24,6 +24,9 @@ Usage:
         -d direct - use list of IP addresses given after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
+        
+        -D Dig for cable router external IP address. Defaults to false: use config file if it exists. 
+            (adds a few-second delay to start up)
 
         -x eternal - use default list of IP address, but only the external ones
             This is useful when not using the house internet (i.e. a MiFi or some other)
@@ -75,12 +78,39 @@ EOF
 
 }
 
+function control_c()
+{
+    echo
+    exit 1
+}
+trap control_c SIGINT
+
+
+MAX_IPS=128
+
 IS_MACOS=true
 if [[ "$OSTYPE" == "darwin"* ]]; then
     IS_MACOS=true
 else
     IS_MACOS=false
 fi
+
+function cable_router_ip()
+{
+    local IP
+    local router_file="${HOME}"/.f-ingping/cable_router_ip.txt
+    
+    # this adds a delay I am not happy with, but...
+    if ! ${DIG_LOCAL} || ! IP=$(dig +short myip.opendns.com @resolver1.opendns.com 2> /dev/null); then
+        if [ -f "${router_file}" ]; then
+            IP=$(cat "${router_file}")
+        fi
+    else
+        echo "${IP}" > "${router_file}"
+    fi
+
+    echo "${IP}"
+}
 
 function check_keypress()
 {
@@ -105,7 +135,7 @@ function speak_quietly()
 function speak_loudly()
 {
     if command -v say &> /dev/null ; then
-        say --voice="$1" "$2"
+        say --voice="$1" "$2" &> /dev/null
     fi
 }
 
@@ -199,8 +229,7 @@ function ping_the_list()
                 if [[ ${failed_count} -eq 0 ]]; then
                     printf "\n";
                 fi
-
-                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip}" "$(date -jR)"
+                printf "${VULGAR_PREFIX} can't ping %s %s\n" "${ip_name:-"${ip}"}" "$(date -jR)"
             fi
 
             ((++failed_count))
@@ -208,7 +237,8 @@ function ping_the_list()
 
             ((++ip_index))
             if [[ ${ip_index} -lt ${CRITICAL_IPS} ]]; then
-                break;
+                failed_count=$((${MAX_IPS} + ${failed_count}))
+                return "${failed_count}"
             fi
         fi
     done
@@ -224,20 +254,19 @@ function report_failed_internet()
 
     if [[ ${failed_count} -eq 0 ]]; then
         if [[ ${internet_down} -ne 0 ]]; then
-            if ${QUIETLY}; then
-                printf "%s" '↑'
-            fi
+            printf "%s" '↑'
 
             speak_internet_up
             internet_down=0
         fi
     else
         if [[ ${internet_down} -eq 0 ]]; then
-            if ${QUIETLY}; then
+            if [ ${failed_count} -gt ${MAX_IPS} ] || [ ${failed_count} -eq "${total_count}" ]; then
                 printf "%s" '↓'
+                internet_down=1
+                failed_count=$(( ${failed_count} > ${MAX_IPS} ? ${MAX_IPS}-${failed_count} : ${failed_count} ))
+                speak_internet_problem "${failed_count}" "${total_count}"
             fi
-            internet_down=1
-            speak_internet_problem "${failed_count}" "${total_count}"
         fi
     fi
 
@@ -247,22 +276,22 @@ function report_failed_internet()
 function report_opts()
 {
     echo "QUIETLY=${QUIETLY}"
+    echo "VERY_QUIETLY=${VERY_QUIETLY}"
+    echo "ANNOUCE_UP=${ANNOUCE_UP}"
     echo "VOICE_LIST=${VOICE_LIST}"
     echo "COMMAND=${COMMAND}"
     echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
     echo "LIST_DELAY=${LIST_DELAY}"
     echo "PING_WAIT=${PING_WAIT}"
     echo "CRITICAL_IPS=${CRITICAL_IPS}"
+    echo "DIG_LOCAL=${DIG_LOCAL}"
 }
+
 
 function fuckingping_list()
 {
-    if ! ${VERY_QUIETLY}; then
+    if ! ${QUIETLY}; then
         echo "Begin ping tests for: " "$@"
-        report_opts
-        current_wifi_adapter
-        number1_network
-        date -jR
     fi
 
     local failed_count=0
@@ -289,21 +318,20 @@ function fuckingping_list()
 
 function fuckingping_default()
 {
-    fuckingping_list  "router:10.10.1.1" "access point:10.10.1.254" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
+    CRITICAL_IPS=2 # at least the home router and xfinity DNS
+    CABLE_ROUTER_IP=$(cable_router_ip)
+    if [ -n "${CABLE_ROUTER_IP}" ]; then
+        CABLE_ROUTER_IP=" cable router:${CABLE_ROUTER_IP}" # note the space here and the formatting below!
+        CRITICAL_IPS=3
+    fi
+
+    fuckingping_list  "router:10.10.1.1${CABLE_ROUTER_IP}" "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
 }
 
 function fuckingping_default_external()
 {
     fuckingping_list "xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1"
 }
-
-function control_c()
-{
-    echo
-    exit 1
-}
-
-trap control_c SIGINT
 
 
 OPTIND=1
@@ -318,8 +346,9 @@ PING_WAIT=
 VULGAR_PREFIX="Fucking"
 CRITICAL_IPS=0
 ANNOUCE_UP=false
+DIG_LOCAL=false
 
-while getopts "hqQdxuF:v:w:W:c:" opt; do
+while getopts "hqQdDxuF:v:w:W:c:" opt; do
     case "${opt}" in
     h|\?)
         show_help
@@ -342,30 +371,32 @@ while getopts "hqQdxuF:v:w:W:c:" opt; do
         ;;
     W)  PING_WAIT="${OPTARG}"
         ;;
-    c)  critical_ips_opt="${OPTARG}"
+    c)  CRITICAL_IPS="${OPTARG}"
         ;;
     u) ANNOUCE_UP=true
+        ;;
+    D) DIG_LOCAL=true
         ;;
     esac
 done
 
+# shift away the processed options
 shift $((OPTIND-1))
+
+# if there is a -- the all that follows should be IPs for the -d command
 [ "$1" = "--" ] && shift
 
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
 
-if [ -v critical_ips_opt ]; then
-    CRITICAL_IPS=${critical_ips_opt}
-else
-    case "${COMMAND}" in
-    fuckingping_default)
-        CRITICAL_IPS=3
-        ;;
-    *)
-        CRITICAL_IPS=0
-        ;;
-    esac
+if ! ${VERY_QUIETLY}; then
+    echo "Trying to fucking ping some IP addresses to check internet connectivity"
 fi
 
+if ! ${QUIETLY}; then
+    report_opts
+    current_wifi_adapter
+    number1_network
+    date -jR
+fi
 
 "${COMMAND}" "$@"
