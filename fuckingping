@@ -317,6 +317,8 @@ function fuckingping_list()
     echo
 }
 
+EXTERNAL_IPS_TO_CHECK=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+
 function fuckingping_default()
 {
     local -a ips
@@ -329,15 +331,13 @@ function fuckingping_default()
         CRITICAL_IPS=3
     fi
 
-    ips+=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+    ips+=("${EXTERNAL_IPS_TO_CHECK[@]}")
     fuckingping_list "${ips[@]}"
 }
 
 function fuckingping_default_external()
 {
-    local -a ips
-    ips=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
-    fuckingping_list "${ips[@]}"
+    fuckingping_list "${EXTERNAL_IPS_TO_CHECK[@]}"
 }
 
 
