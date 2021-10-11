@@ -96,18 +96,38 @@ else
     IS_MACOS=false
 fi
 
+CONFIG_FILE="${HOME}/.f-ingping/f-ingping.json"
+
+function config_create_default()
+{
+    echo '{"external_ip":""}' | jq '.' > "${CONFIG_FILE}"
+}
+
+function config_write_external_ip()
+{
+    local IP="$1"
+
+    if ! test -f "${CONFIG_FILE}" ; then
+        # can use jq to update file, but they must exist first
+        config_create_default
+    fi
+    echo $(jq '.external_ip = "'${IP}'"' "${CONFIG_FILE}") > "${CONFIG_FILE}"
+}
+
+function config_read_external_ip()
+{
+    jq -r '.external_ip' "${CONFIG_FILE}" 2> /dev/null
+}
+
 function cable_router_ip()
 {
     local IP
-    local router_file="${HOME}"/.f-ingping/cable_router_ip.txt
-    
+
     # this adds a delay when the internet is bad I am not happy with, but...
     if ${DIG_LOCAL} && IP=$(dig +short myip.opendns.com @resolver1.opendns.com 2> /dev/null); then
-        echo "${IP}" > "${router_file}"
+        config_write_external_ip "${IP}"
     else
-        if ${USE_CONFIG_FILE} && test -f "${router_file}"; then
-            IP=$(cat "${router_file}")
-        fi
+        ${USE_CONFIG_FILE} && IP=$(config_read_external_ip)
     fi
 
     echo "${IP}"
