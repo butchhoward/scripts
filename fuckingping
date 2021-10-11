@@ -100,17 +100,28 @@ CONFIG_FILE="${HOME}/.f-ingping/f-ingping.json"
 
 function config_create_default()
 {
-    echo '{"external_ip":""}' | jq '.' > "${CONFIG_FILE}"
+    local DEFAULT_CONFIG
+    read -r -d '' DEFAULT_CONFIG <<- EOM
+{
+    "external_ip":""
+}
+EOM
+
+    echo "${DEFAULT_CONFIG}" > "${CONFIG_FILE}"
+}
+
+function config_ensure_exists()
+{
+    if ! test -f "${CONFIG_FILE}" ; then
+        # can use jq to update a file, but it must exist first
+        config_create_default
+    fi
 }
 
 function config_write_external_ip()
 {
     local IP="$1"
-
-    if ! test -f "${CONFIG_FILE}" ; then
-        # can use jq to update file, but they must exist first
-        config_create_default
-    fi
+    config_ensure_exists
     echo $(jq '.external_ip = "'${IP}'"' "${CONFIG_FILE}") > "${CONFIG_FILE}"
 }
 
