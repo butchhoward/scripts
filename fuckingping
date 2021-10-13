@@ -200,9 +200,9 @@ function speak_ping_fail()
     fi
 }
 
-function speak_internet_problem()
+function speak_problem()
 {
-    local MSG="${VULGAR_PREFIX} internet might be down. $1 of $2 pings failed."
+    local MSG="${1}"
 
     if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
@@ -210,6 +210,16 @@ function speak_internet_problem()
     fi
 
     speak_loudly "${VOICES[0]}" "${MSG}"
+}
+
+function speak_internet_problem()
+{
+    speak_problem "${VULGAR_PREFIX} internet might be down. $1 of $2 pings failed."
+}
+
+function speak_critical_internet_problem()
+{
+    speak_problem "${VULGAR_PREFIX} internet might be down. $1 of $2 critical addresses failed."
 }
 
 function current_wifi_adapter()
@@ -255,25 +265,24 @@ function ping_the_list()
         if the_pinger "${ip}"; then
             printf "%s" "."
         else
-            if ${VERY_QUIETLY}; then
-                printf "%s" "*"
-            else
+            printf "%s" "*"
+            if ! ${VERY_QUIETLY}; then
                 if [[ ${failed_count} -eq 0 ]]; then
                     printf "\n";
                 fi
-                what_failed="${ip_name:-"${ip}"} ${ip:-"(${ip})"}"
+                what_failed="${ip_name:-"${ip}"} ${ip_name:+"(${ip})"}"
                 printf "${VULGAR_PREFIX} can't ping %s %s\n" "${what_failed}" "$(date -jR)"
             fi
 
             ((++failed_count))
             speak_ping_fail "${ip_name:-"${ip}"}"
 
-            ((++ip_index))
             if [[ ${ip_index} -lt ${CRITICAL_IPS} ]]; then
                 failed_count=$((${MAX_IPS} + ${failed_count}))
                 return "${failed_count}"
             fi
         fi
+        ((++ip_index))
     done
 
     return "${failed_count}"
@@ -297,8 +306,13 @@ function report_failed_internet()
             if [ ${failed_count} -gt ${MAX_IPS} ] || [ ${failed_count} -eq "${total_count}" ]; then
                 printf "%s" '↓'
                 internet_down=1
-                failed_count=$(( ${failed_count} > ${MAX_IPS} ? ${failed_count}-${MAX_IPS} : ${failed_count} ))
-                speak_internet_problem "${failed_count}" "${total_count}"
+
+                if [ ${failed_count} -gt ${MAX_IPS} ] ; then
+                    failed_count=$((${failed_count}-${MAX_IPS}))
+                    speak_critical_internet_problem "${failed_count}" "${CRITICAL_IPS}"
+                else
+                    speak_internet_problem "${failed_count}" "${total_count}"
+                fi
             fi
         fi
     fi
