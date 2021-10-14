@@ -367,3 +367,31 @@ EOM
     git add -A
     git commit -m "${COMMIT_MSG}"
 }
+
+
+function _repo_clone_many_help()
+{
+    echo "repo clone_many [host_prefix]"
+    echo
+    echo "  host_prefix - the github host address. defaults to 'github.com'"
+    echo "                to include an organization, add it to the host address: "
+    echo "                  github.com:my_org"
+    echo "                  github.mycompany.com:my_org"
+    echo
+    echo "The list of repositories to clone is read from STDIN (one repository name per line)"
+    echo "Assumes git protocol clone (git clone git@<HOST_NAME>:<ORG_NAME>/<REPO_NAME>.git)"
+    echo
+    echo "Example:"
+    echo "  repo clone_many github.mycompany.com:my_org < repo_list.txt"
+    echo
+}
+
+function repo_clone_many()
+{
+    local HOST="${1:-github.com}"
+
+    while read -r REPO_NAME; do
+        git clone "git@${HOST}/${REPO_NAME}.git"
+    done
+
+}
