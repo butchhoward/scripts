@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Switch SSH config files to make it easier to use different accounts
+#   switch_ssh [account_name]
+#
+# Makes the file '~/.ssh/config.<account_name>' the current '~/.ssh/config'
+# <account_name> defaults to 'default' if not provided
+
+
+# Example 'config.default'
+#
+# HOST *
+#     IdentityFile ~/.ssh/id_ed25519
+#     IdentitiesOnly Yes
+#     User butchhoward
+
+# Example 'config.other_co'
+#
+# HOST github.other_co.com
+#     Hostname github.other_co.com
+#     IdentityFile ~/.ssh/id_other_co
+#     User username-private
+# HOST github.com
+#     Hostname github.com
+#     IdentityFile ~/.ssh/id_other_co
+#     User username-public
+# HOST *
+#     IdentitiesOnly Yes
+
+
+client="${1:-default}"
+
+config_name="${HOME}/.ssh/config"
+src_config_name="${config_name}.${client}"
+
+if test -f "${src_config_name}"; then
+    ssh-add -D >& /dev/null # delete all keys in the keychain just in case
+    cp "${src_config_name}" "${config_name}"
+    echo "switched ssh config to: ${client}"
+else
+    echo "could not find ${src_config_name}" 1>&2
+    exit 1
+fi
