@@ -378,12 +378,14 @@ function _repo_clone_many_help()
     echo "                  github.com:my_org"
     echo "                  github.mycompany.com:my_org"
     echo
-    echo "The list of repositories to clone is read from STDIN (one repository name per line)"
+    echo "The list of repository names to clone is read from STDIN (one repository name per line)"
     echo "Assumes git protocol clone (git clone git@<HOST_NAME>:<ORG_NAME>/<REPO_NAME>.git)"
     echo
     echo "Example:"
     echo "  repo clone_many github.mycompany.com:my_org < repo_list.txt"
     echo
+    echo "Build a list gh and clone them all:"
+    echo '  repo clone_many github.com:butchhoward < <(gh repo list --json name | jq -r '\''.[] | .name'\'')'
 }
 
 function repo_clone_many()
