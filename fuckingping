@@ -373,6 +373,16 @@ function fuckingping_default_external()
 }
 
 
+function check_dependencies()
+{
+    ${IS_MACOS} || echo "Not sure how this will work on non-MacOS systems."
+    command -v ping &> /dev/null || echo "Requires 'ping' to test network connectivity."
+    command -v networksetup &> /dev/null || echo "Requires 'networksetup' to get network status."
+    command -v say &> /dev/null || echo "Voice options require 'say' to be installed."
+    command -v cowsay &> /dev/null || echo "Some alternate (quiet) options require 'cowsay' to be installed."
+    command -v jq &> /dev/null || echo "'jq' is required to process json data."
+}
+
 function report_opts()
 {
     echo "QUIETLY=${QUIETLY}"
@@ -386,6 +396,7 @@ function report_opts()
     echo "CRITICAL_IPS=${CRITICAL_IPS}"
     echo "DIG_LOCAL=${DIG_LOCAL}"
     echo "USE_CONFIG_FILE=${USE_CONFIG_FILE}"
+    check_dependencies
 }
 
 QUIETLY=false
