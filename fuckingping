@@ -349,27 +349,36 @@ function fuckingping_list()
     echo
 }
 
-EXTERNAL_IPS_TO_CHECK=("xfinity DNS:75.75.75.75" "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+EXTERNAL_IPS_TO_CHECK=( "open DNS:208.67.222.222" "Google DNS:8.8.8.8" "Cloudflare DNS:1.1.1.1")
+EXTERNAL_CRITICAL_IPS=("google.com" "xfinity DNS:75.75.75.75")
+ROUTER_IP="router:10.10.1.1"
 
-function fuckingping_default()
+function default_list()
 {
+    if [[ "$#" -ne 0 ]]; then
+        IPS_TO_CHECK=("$@")
+        return 0
+    fi
+
     local -a ips
-    ips=("router:10.10.1.1")
-    CRITICAL_IPS=2 # at least the home router and xfinity DNS
+    local -a CRITICAL_IPS_TO_CHECK
+
+    CRITICAL_IPS_TO_CHECK=("${ROUTER_IP}")
 
     CABLE_ROUTER_IP=$(cable_router_ip)
     if [ -n "${CABLE_ROUTER_IP}" ]; then
-        ips+=("cable router:${CABLE_ROUTER_IP}")
-        CRITICAL_IPS=3
+        CRITICAL_IPS_TO_CHECK+=("cable router:${CABLE_ROUTER_IP}")
     fi
+    CRITICAL_IPS_TO_CHECK+=("${EXTERNAL_CRITICAL_IPS[@]}")
 
-    ips+=("${EXTERNAL_IPS_TO_CHECK[@]}")
-    fuckingping_list "${ips[@]}"
+    CRITICAL_IPS="${#CRITICAL_IPS_TO_CHECK[@]}" # at least initial critical IPs and xfinity DNS
+
+    IPS_TO_CHECK=("${CRITICAL_IPS_TO_CHECK[@]}" "${EXTERNAL_IPS_TO_CHECK[@]}")
 }
 
-function fuckingping_default_external()
+function external_list()
 {
-    fuckingping_list "${EXTERNAL_IPS_TO_CHECK[@]}"
+    IPS_TO_CHECK=("${EXTERNAL_CRITICAL_IPS[@]}" "${EXTERNAL_IPS_TO_CHECK[@]}" "$@")
 }
 
 
@@ -403,7 +412,7 @@ QUIETLY=false
 VERY_QUIETLY=false
 CURRENT_VOICE=0
 VOICE_LIST="Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
-COMMAND="fuckingping_default"
+LIST_PREP_COMMAND="default_list"
 LIST_DELAY=10
 PING_WAIT=
 VULGAR_PREFIX="Fucking"
@@ -411,6 +420,7 @@ CRITICAL_IPS=0
 ANNOUCE_UP=false
 DIG_LOCAL=false
 USE_CONFIG_FILE=true
+declare -a IPS_TO_CHECK
 
 
 OPTIND=1
@@ -427,9 +437,9 @@ while getopts "hqQdDxuF:v:w:W:c:" opt; do
         ;;
     v)  VOICE_LIST="${OPTARG}"
         ;;
-    d)  COMMAND="fuckingping_list"
+    d)  LIST_PREP_COMMAND="default_list"
         ;;
-    x)  COMMAND="fuckingping_default_external"
+    x)  LIST_PREP_COMMAND="external_list"
         ;;
     F)  VULGAR_PREFIX="${OPTARG}"
         ;;
@@ -463,6 +473,8 @@ if ! ${VERY_QUIETLY}; then
     echo "Trying to ${VULGAR_PREFIX} Ping some IP addresses to check internet connectivity"
 fi
 
+"${LIST_PREP_COMMAND}" "$@"
+
 if ! ${QUIETLY}; then
     report_opts
     current_wifi_adapter
@@ -470,4 +482,4 @@ if ! ${QUIETLY}; then
     date -jR
 fi
 
-"${COMMAND}" "$@"
+fuckingping_list "${IPS_TO_CHECK[@]}"
