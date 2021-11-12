@@ -422,50 +422,93 @@ DIG_LOCAL=false
 USE_CONFIG_FILE=true
 declare -a IPS_TO_CHECK
 
+function set_opt_q()
+{
+    QUIETLY=true
+}
 
-OPTIND=1
-while getopts "hqQdDxuF:v:w:W:c:" opt; do
-    case "${opt}" in
-    h|\?)
+function set_opt_Q()
+{
+    VERY_QUIETLY=true
+    set_opt_q
+}
+
+function set_opt_W()
+{
+    PING_WAIT="${1}"
+    return 1
+}
+
+function set_opt_x()
+{
+    LIST_PREP_COMMAND="external_list"
+}
+
+function set_opt_v()
+{
+    VOICE_LIST="${1}"
+    return 1
+}
+
+function set_opt_d()
+{
+    LIST_PREP_COMMAND="default_list"
+}
+
+function set_opt_D()
+{
+    if ${DIG_LOCAL}; then
+        DIG_LOCAL=false
+        USE_CONFIG_FILE=false
+    else
+        DIG_LOCAL=true
+    fi
+}
+function set_opt_u()
+{
+    ANNOUCE_UP=true
+}
+function set_opt_F()
+{
+    VULGAR_PREFIX="${1}"
+    return 1
+}
+function set_opt_w()
+{
+    LIST_DELAY="${1}"
+    return 1
+}
+function set_opt_c()
+{
+    CRITICAL_IPS="${1}"
+    return 1
+}
+
+shopt -s extglob
+
+while (( "$#" )); do
+    case "$1" in
+    -h|-[?]|--help)
         show_help
         exit 0
         ;;
-    q)  QUIETLY=true
+    --)
+        shift
+        break
         ;;
-    Q)  VERY_QUIETLY=true
-        QUIETLY=true
+    -*([hqQdDxuFvwWc]) )
+        opts="$1"
+        for (( i=1; i<${#opts}; i++ )); do
+            "set_opt_${1:$i:1}" "$2" || shift
+        done
+        shift
         ;;
-    v)  VOICE_LIST="${OPTARG}"
-        ;;
-    d)  LIST_PREP_COMMAND="default_list"
-        ;;
-    x)  LIST_PREP_COMMAND="external_list"
-        ;;
-    F)  VULGAR_PREFIX="${OPTARG}"
-        ;;
-    w)  LIST_DELAY="${OPTARG}"
-        ;;
-    W)  PING_WAIT="${OPTARG}"
-        ;;
-    c)  CRITICAL_IPS="${OPTARG}"
-        ;;
-    u)  ANNOUCE_UP=true
-        ;;
-    D)  if ${DIG_LOCAL}; then
-            DIG_LOCAL=false
-            USE_CONFIG_FILE=false
-        else
-            DIG_LOCAL=true
-        fi
+    *)
+        echo "Unknown Option: '$1'"
+        exit 0
         ;;
     esac
 done
-
-# shift away the processed options
-shift $((OPTIND-1))
-
-# if there is a -- the all that follows should be IPs for the -d command
-[ "$1" = "--" ] && shift
 
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
 
