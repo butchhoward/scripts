@@ -434,10 +434,14 @@ function set_opt_Q()
     set_opt_q
 }
 
-function set_opt_W()
+function set_opt_ping-delay()
 {
     PING_WAIT="${1}"
     return 1
+}
+function set_opt_W()
+{
+    set_opt_ping-delay "$1"
 }
 
 function set_opt_x()
@@ -474,41 +478,66 @@ function set_opt_F()
     VULGAR_PREFIX="${1}"
     return 1
 }
-function set_opt_w()
+function set_opt_list-delay()
 {
     LIST_DELAY="${1}"
     return 1
+}
+function set_opt_w()
+{
+    set_opt_list-delay "$1"
 }
 function set_opt_c()
 {
     CRITICAL_IPS="${1}"
     return 1
 }
+function set_opt_help()
+{
+    show_help
+    exit 0
+}
 
 shopt -s extglob
 
 while (( "$#" )); do
     case "$1" in
-    -h|-[?]|--help)
-        show_help
-        exit 0
-        ;;
     --)
         shift
         break
         ;;
-    -*([hqQdDxuFvwWc]) )
+
+    --*(list-delay|ping-delay)=* )
+        value="${1##*=}"
+        opt="${1%%=*}"
+        opt="${opt:2}"
+        "set_opt_${opt}" "${value}"
+        ;;
+
+    --*(help|list-delay|ping-delay) )
+        opt="${1:2}"
+        "set_opt_${opt}" "$2" || shift
+        ;;
+
+    -*([hqQdDxuFvwWch?]) )
         opts="$1"
         for (( i=1; i<${#opts}; i++ )); do
-            "set_opt_${1:$i:1}" "$2" || shift
+            opt="${1:$i:1}"
+            case "${opt}" in
+            [?h])
+                opt="help"
+                ;;
+            esac
+            "set_opt_${opt}" "$2" || shift
         done
-        shift
         ;;
+
     *)
         echo "Unknown Option: '$1'"
         exit 0
         ;;
     esac
+    shift
 done
 
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
