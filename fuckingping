@@ -24,9 +24,9 @@ Usage:
         -d direct - use list of IP addresses given after '--'
             The default is to use a preset list of IP addresses that include local router
             and several public DNS servers
-        
-        -D Dig for cable router external IP address. Defaults to false: use config file if it exists. 
-            (dig adds a few-second delay to start up.) 
+
+        -D Dig for cable router external IP address. Defaults to false: use config file if it exists.
+            (dig adds a few-second delay to start up.)
             (To be perverse: -DD disables both dig and the config file use.)
 
         -x eternal - use default list of IP address, but only the external ones
@@ -122,7 +122,8 @@ function config_write_external_ip()
 {
     local IP="$1"
     config_ensure_exists
-    echo $(jq '.external_ip = "'${IP}'"' "${CONFIG_FILE}") > "${CONFIG_FILE}"
+    mv "${CONFIG_FILE}" "${CONFIG_FILE}.bak"
+    jq ".external_ip = \'${IP}\'" "${CONFIG_FILE}.bak" > "${CONFIG_FILE}"
 }
 
 function config_read_external_ip()
@@ -175,7 +176,7 @@ function speak_internet_up()
 {
     local MSG="Internet is back up"
 
-    if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
+    if ! ${ANNOUNCE_UP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
         return 0
     fi
@@ -195,7 +196,7 @@ function speak_ping_fail()
     speak_loudly "${VOICES[${CURRENT_VOICE}]}" "${MSG}"
 
     ((++CURRENT_VOICE))
-    if [[ "${CURRENT_VOICE}" -ge "${#VOICES[@]}" ]]; then
+    if (( CURRENT_VOICE >> "${#VOICES[@]}" )); then
         CURRENT_VOICE=0
     fi
 }
@@ -204,7 +205,7 @@ function speak_problem()
 {
     local MSG="${1}"
 
-    if ! ${ANNOUNCE_IP} && ${QUIETLY}; then
+    if ! ${ANNOUNCE_UP} && ${QUIETLY}; then
         speak_quietly "${MSG}"
         return 0
     fi
@@ -267,7 +268,7 @@ function ping_the_list()
         else
             printf "%s" "*"
             if ! ${VERY_QUIETLY}; then
-                if [[ ${failed_count} -eq 0 ]]; then
+                if (( failed_count == 0 )); then
                     printf "\n";
                 fi
                 what_failed="${ip_name:-"${ip}"} ${ip_name:+"(${ip})"}"
@@ -277,8 +278,8 @@ function ping_the_list()
             ((++failed_count))
             speak_ping_fail "${ip_name:-"${ip}"}"
 
-            if [[ ${ip_index} -lt ${CRITICAL_IPS} ]]; then
-                failed_count=$((${MAX_IPS} + ${failed_count}))
+            if (( ip_index < CRITICAL_IPS )); then
+                failed_count=$(( MAX_IPS + failed_count ))
                 return "${failed_count}"
             fi
         fi
@@ -294,21 +295,21 @@ function report_failed_internet()
     local total_count=$2
     local internet_down=$3
 
-    if [[ ${failed_count} -eq 0 ]]; then
-        if [[ ${internet_down} -ne 0 ]]; then
+    if (( failed_count == 0 )); then
+        if ! (( internet_down )); then
             printf "%s" '↑'
 
             speak_internet_up
             internet_down=0
         fi
     else
-        if [[ ${internet_down} -eq 0 ]]; then
-            if [ ${failed_count} -gt ${MAX_IPS} ] || [ ${failed_count} -eq "${total_count}" ]; then
+        if (( internet_down )); then
+            if (( failed_count > MAX_IPS )) || (( failed_count == total_count )); then
                 printf "%s" '↓'
                 internet_down=1
 
-                if [ ${failed_count} -gt ${MAX_IPS} ] ; then
-                    failed_count=$((${failed_count}-${MAX_IPS}))
+                if (( failed_count > MAX_IPS )) ; then
+                    failed_count=$(( failed_count - MAX_IPS ))
                     speak_critical_internet_problem "${failed_count}" "${CRITICAL_IPS}"
                 else
                     speak_internet_problem "${failed_count}" "${total_count}"
@@ -335,7 +336,7 @@ function fuckingping_list()
 
         ping_the_list "$@"
         failed_count=$?
-        if [ ${failed_count} -eq 128 ]; then
+        if (( failed_count == 128 )); then
             break
         fi
 
@@ -396,7 +397,7 @@ function report_opts()
 {
     echo "QUIETLY=${QUIETLY}"
     echo "VERY_QUIETLY=${VERY_QUIETLY}"
-    echo "ANNOUCE_UP=${ANNOUCE_UP}"
+    echo "ANNOUNCE_UP=${ANNOUNCE_UP}"
     echo "VOICE_LIST=${VOICE_LIST}"
     echo "COMMAND=${COMMAND}"
     echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
@@ -417,7 +418,7 @@ LIST_DELAY=10
 PING_WAIT=
 VULGAR_PREFIX="Fucking"
 CRITICAL_IPS=0
-ANNOUCE_UP=false
+ANNOUNCE_UP=false
 DIG_LOCAL=false
 USE_CONFIG_FILE=true
 declare -a IPS_TO_CHECK
