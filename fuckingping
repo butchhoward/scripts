@@ -399,7 +399,6 @@ function report_opts()
     echo "VERY_QUIETLY=${VERY_QUIETLY}"
     echo "ANNOUNCE_UP=${ANNOUNCE_UP}"
     echo "VOICE_LIST=${VOICE_LIST}"
-    echo "COMMAND=${COMMAND}"
     echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
     echo "LIST_DELAY=${LIST_DELAY}"
     echo "PING_WAIT=${PING_WAIT}"
@@ -507,19 +506,29 @@ while (( "$#" )); do
         break
         ;;
 
-    --*(list-delay|ping-delay)=* )
+    # long options using equal sign
+    # --list-delay=22
+    --@(list-delay|ping-delay)=* )
         value="${1##*=}"
         opt="${1%%=*}"
         opt="${opt:2}"
         "set_opt_${opt}" "${value}"
         ;;
 
-    --*(help|list-delay|ping-delay) )
+    # long options with no equal sign, with or without value
+    # --help
+    # --list-delay 22
+    --@(help|list-delay|ping-delay) )
         opt="${1:2}"
         "set_opt_${opt}" "$2" || shift
         ;;
-
-    -*([hqQdDxuFvwWch?]) )
+    
+    # short options, single or set, possibly last takes a value
+    # -q
+    # -W 22
+    # -qdu
+    # -qdW 22
+    -+([hqQdDxuFvwWch?]) )
         opts="$1"
         for (( i=1; i<${#opts}; i++ )); do
             opt="${1:$i:1}"
