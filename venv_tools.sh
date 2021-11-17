@@ -111,6 +111,7 @@ function venv_is_a_venv()
     if [[ -d "${location}" && -e "${location}/bin/activate" ]]; then
         return 0
     fi
+
     local locationp2="$HOME/.virtualenvs/${location##*/}"
     if [[ -d "${locationp2}" ]]; then
         return 0
@@ -132,8 +133,9 @@ function venv_remove()
     _venv_deactivate
 
     if [[ -d "${location}" && -e "${location}/bin/activate" ]]; then
-            rm -rf "${location}"
+        rm -rf "${location}"
     fi
+
     local locationp2="$HOME/.virtualenvs/${location##*/}"
     if [[ -d "${locationp2}" ]]; then
         rmvirtualenv "${location##*/}"
