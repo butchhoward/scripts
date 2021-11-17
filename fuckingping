@@ -296,14 +296,14 @@ function report_failed_internet()
     local internet_down=$3
 
     if (( failed_count == 0 )); then
-        if ! (( internet_down )); then
+        if (( internet_down )); then
             printf "%s" '↑'
 
             speak_internet_up
             internet_down=0
         fi
     else
-        if (( internet_down )); then
+        if ! (( internet_down )); then
             if (( failed_count > MAX_IPS )) || (( failed_count == total_count )); then
                 printf "%s" '↓'
                 internet_down=1
@@ -361,7 +361,6 @@ function default_list()
         return 0
     fi
 
-    local -a ips
     local -a CRITICAL_IPS_TO_CHECK
 
     CRITICAL_IPS_TO_CHECK=("${ROUTER_IP}")
@@ -470,7 +469,7 @@ function set_opt_D()
 }
 function set_opt_u()
 {
-    ANNOUCE_UP=true
+    ANNOUNCE_UP=true
 }
 function set_opt_F()
 {
@@ -522,13 +521,13 @@ while (( "$#" )); do
         opt="${1:2}"
         "set_opt_${opt}" "$2" || shift
         ;;
-    
+
     # short options, single or set, possibly last takes a value
     # -q
     # -W 22
     # -qdu
     # -qdW 22
-    -+([hqQdDxuFvwWch?]) )
+    -+([hqQdDxuFvwWc?]) )
         opts="$1"
         for (( i=1; i<${#opts}; i++ )); do
             opt="${1:$i:1}"
