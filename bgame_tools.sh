@@ -67,12 +67,17 @@ function _exclude_pattern()
 function _bgame_wordle_usage
 {
     echo "Usage:"
-    echo " bgame $1 exlcude_letters require_letters exclude_pattern require_pattern"
+    echo " bgame $1 [-l num | --word-length num]"
+    echo "          [-x 'letters' | --exlcude-letters='letters' ]"
+    echo "          [-r 'letters' | --require-letters='letters']"
+    echo "          [-x 'pattern' | --exclude-pattern='pattern']"
+    echo "          [-r 'pattern' | --require_pattern='pattern']"
     echo ""
-    echo "      exclude_letters - a list of letters to exclude, filters any word with any of these"
-    echo "      require_letters - a list of letters to require, filters any word without one of these"
-    echo "      exclude_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
-    echo "      require_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
+    echo "      -l, --word_length     - the length of the words to be used in the solving (defaults to 5)"
+    echo "      -x, --exclude_letters - a list of letters to exclude, filters any word with any of these"
+    echo "      -r, --require_letters - a list of letters to require, filters any word without one of these"
+    echo "      -n, --negative_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
+    echo "      -p, --positive_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
     echo
     echo "Word list used is currently set to '${BGAME_WORD_FILE}'."
     echo "Change the word list file by setting 'BGAME_WORD_FILE'"
@@ -94,12 +99,78 @@ function _bgame_wordle_help()
 
 function _bgame_wordle()
 {
-    EXCLUDE="$1"
-    MUST_HAVE="$2"
-    NEGATIVE_PATTERN="$3"
-    POSITIVE_PATTERN="$4"
+    local WORD_LENGTH=5
+    local EXCLUDE
+    local MUST_HAVE
+    local NEGATIVE_PATTERN
+    local POSITIVE_PATTERN
 
-    _limit_length 5 \
+
+    while (( $# )); do
+
+        case "$1" in
+        -l|--word-length) 
+            WORD_LENGTH="$2"
+            shift 
+            shift
+            ;;
+        -l=*|--word-length=*)
+            WORD_LENGTH="${1##*=}"
+            shift 
+            ;;
+
+        -r|--require-letters) 
+            MUST_HAVE="$2"
+            shift 
+            shift
+            ;;
+        -r=*|--require-letters=*) 
+            MUST_HAVE="${1##*=}"
+            shift 
+            ;;
+
+
+        -x|--exclude-letters) 
+            EXCLUDE="$2"
+            shift 
+            shift
+            ;;
+        -x=*|--exclude-letters=*) 
+            EXCLUDE="${1##*=}"
+            shift 
+            ;;
+
+        -n|--negative-pattern) 
+            NEGATIVE_PATTERN="$2"
+            shift 
+            shift
+            ;;
+        -n=*|--negative-pattern=*) 
+            NEGATIVE_PATTERN="${1##*=}"
+            shift 
+            ;;
+
+        -p|--positive-pattern) 
+            POSITIVE_PATTERN="$2"
+            shift 
+            shift
+            ;;
+        -p=|*--positive-pattern=*) 
+            POSITIVE_PATTERN="${1##*=}"
+            shift 
+            ;;
+
+
+        *)
+            echo "unknown option: '$1'"
+            _bgame_wordle_usage 'wordle|wordle_try'
+            return 1
+            ;;
+        esac
+
+    done
+
+    _limit_length "${WORD_LENGTH}" \
     | _exclude_letters "${EXCLUDE}" \
     | _require_letters "${MUST_HAVE}" \
     | _require_pattern "${NEGATIVE_PATTERN}" \
