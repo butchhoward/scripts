@@ -22,7 +22,8 @@ Add these lines to the `.bash_profile` or `.bashrc` to set the path and to enabl
 
 ```shell
 #bhtools
-BHTOOLS_PATH="$HOME/projects/bh/scripts"
+export BHTOOLS_PROJECTS_PATH="$HOME/projects"  # a path to the folder where all my project live
+BHTOOLS_PATH="${BHTOOLS_PROJECTS_PATH}/scripts"
 if [ -f "${BHTOOLS_PATH}/scripts.sh" ]; then source "${BHTOOLS_PATH}/scripts.sh"; fi
 export PATH="${BHTOOLS_PATH}:$PATH"
 
@@ -58,6 +59,10 @@ Tools for docker images
 ## baz
 
 Tools for the Azure cli
+
+## bgame
+
+Some tools to help with playing some games.
 
 ## Libraries
 
