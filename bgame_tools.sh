@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# To use a different word, list EXPORT BGAME_WORD_FILE="<path to word file"
+# To use a different word list, export BGAME_WORD_FILE="<path to word file"
 : "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/english-words/words_alpha.txt"}"
 
 function _limit_length()
@@ -221,5 +221,5 @@ function bgame_wordle_try()
 
     local size=${#WORDS[@]}
     local index=$((r % size))
-    echo "${WORDS[$index]}"
+    echo "${WORDS[$index]} (out of ${size} possible)"
 }
