@@ -155,7 +155,7 @@ function _bgame_wordle()
             shift 
             shift
             ;;
-        -p=|*--positive-pattern=*) 
+        -p=*|--positive-pattern=*) 
             POSITIVE_PATTERN="${1##*=}"
             shift 
             ;;
