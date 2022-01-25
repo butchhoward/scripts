@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 for s in repo bdocker baz venv bgame; do
-    complete -W "$($s | tr '\n' ' ')" "$s"
+    complete -o bashdefault -o default -W "$($s | tr '\n' ' ')" "$s"
 done
