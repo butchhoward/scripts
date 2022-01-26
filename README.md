@@ -64,6 +64,7 @@ Tools for the Azure cli
 
 Some tools to help with playing some games.
 
+
 ## Libraries
 
 These are the meat of the above stand-alones.
@@ -93,3 +94,11 @@ Use the gource application to make a pretty graphic display of the commit histor
 ## fuckingping
 
 A script to report the status of the network by pinging some well-known IP addresses. This helped while I was working from home and having some network/ISP issues.
+
+
+# ToDo
+
+* remove `function` from all function definitions
+* replace `local` with `declare`
+* replace all uses of `[`...`]` with either `[[`...`]]` or `((`...`))`
+*
