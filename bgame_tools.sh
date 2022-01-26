@@ -6,18 +6,34 @@
 function _limit_length()
 {
     declare LENGTH=${1-:5}
-    declare DICTIONARY="${2:-"${BGAME_WORD_FILE}"}"
+    declare DICTIONARY="${2}"
 
-    if ! [ -r "${DICTIONARY}" ]; then
-        echo "cannot read word file '${DICTIONARY}'" >&2
-        return 1
+    if [[ -p /dev/stdin ]]; then
+        # echo "dictionary is stdin" >&2
+
+        while IFS=$'\r\n' read -r WORD; do
+            if (( ${#WORD} == LENGTH )); then
+                echo "${WORD}"
+            fi
+        done < <(cat -)
+    else
+        : "${DICTIONARY:="${BGAME_WORD_FILE}"}"
+
+        if ! [ -r "${DICTIONARY}" ]; then
+            echo "cannot read word file '${DICTIONARY}'" >&2
+            return 1
+        fi
+
+        # echo "dictionary file is '${DICTIONARY}'" >&2
+
+        while IFS=$'\r\n' read -r WORD; do
+            if (( ${#WORD} == LENGTH )); then
+                echo "${WORD}"
+            fi
+        done < "${DICTIONARY}"
     fi
 
-    while IFS=$'\r\n' read -r WORD; do
-        if (( ${#WORD} == LENGTH )); then
-            echo "${WORD}"
-        fi
-    done < "${DICTIONARY}"
+
 }
 
 function _exclude_letters()
@@ -80,15 +96,25 @@ function _bgame_wordle_usage
     echo "      -r, --require_letters - a list of letters to require, filters any word without one of these"
     echo "      -n, --negative_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
     echo "      -p, --positive_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
-    echo "      -d, --dictionary - a file name to use as the word dictionary"
+    echo "      -d, --dictionary - a file name to use as the word dictionary. The dictionary can also be provided though STDIN, or the default dictionary setting (see below)"
     echo
     echo "The default word list is currently set to '${BGAME_WORD_FILE}'."
     echo "Change the default word list file by setting 'BGAME_WORD_FILE'."
     echo "Use the -d or --dictionary option to set the file for a run."
     echo "To set it permmanently for the session:"
     echo '      export BGAME_WORD_FILE=/path/to/my_word_list.txt'
+    echo "The dictionary can also be read from STDIN."
+    echo "The dictionary data source will be the first of STDIN (if present), -d <file> (if given), default file."
     echo
-    echo "The word file must have a single word on each line."
+    echo "The dictionary data must have a single word on each line."
+    echo
+    echo "Examples:"
+    echo "  While solving a Wordle game:"
+    echo "      bgame wordle -x 'iteol' -r 'ars' -n '.[^r][^a]..' -p 's..ar'"
+    echo "  Choosing a random word from the words made with frequent letters (results from first piped as dictionary to try)"
+    echo "      bgame wordle -p '[eariotnslcud]{5}' | bgame wordle_try"
+    echo "  Use a list of primes as the dictionary (for playing primel)"
+    echo "      bgame wordle_try -d ~/primes-to-100k.txt"
 }
 
 function _bgame_wordle_help()
@@ -112,6 +138,7 @@ function _bgame_wordle()
     while (( $# )); do
 
         case "$1" in
+
         -l|--word-length)
             WORD_LENGTH="$2"
             shift
@@ -191,8 +218,7 @@ function _bgame_wordle()
 
 function bgame_wordle()
 {
-    _bgame_wordle "$@" \
-    | column
+    _bgame_wordle "$@"
 }
 
 function _bgame_wordle_try_help()
