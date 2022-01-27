@@ -3,6 +3,93 @@
 # To use a different word list, export BGAME_WORD_FILE="<path to word file"
 : "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/english-words/words_alpha.txt"}"
 
+function _bgame_wordle_usage
+{
+    echo "Usage:"
+    echo " bgame $1 [-l num | --word-length num]"
+    echo "          [-x 'letters' | --exlcude-letters 'letters' ]"
+    echo "          [-r 'letters' | --require-letters 'letters']"
+    echo "          [-x 'pattern' | --exclude-pattern 'pattern']"
+    echo "          [-r 'pattern' | --require_pattern 'pattern']"
+    echo "          [-d <filename> | --dictionary <filename>]"
+    echo ""
+    echo "      -l, --word_length     - the length of the words to be used in the solving (defaults to 5)"
+    echo "      -x, --exclude_letters - a list of letters to exclude, filters any word with any of these"
+    echo "      -r, --require_letters - a list of letters to require, filters any word without one of these"
+    echo "      -n, --negative_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
+    echo "      -p, --positive_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
+    echo "      -d, --dictionary - a file name to use as the word dictionary. The dictionary can also be provided though STDIN, or the default dictionary setting (see below)"
+    echo
+    echo "The default word list is currently set to '${BGAME_WORD_FILE}'."
+    echo "Change the default word list file by setting 'BGAME_WORD_FILE'."
+    echo "Use the -d or --dictionary option to set the file for a run."
+    echo "To set it permmanently for the session:"
+    echo '      export BGAME_WORD_FILE=/path/to/my_word_list.txt'
+    echo "The dictionary can also be read from STDIN."
+    echo "The dictionary data source will be the first of STDIN (if present), -d <file> (if given), default file."
+    echo
+    echo "The dictionary data must have a single word on each line."
+    echo
+    echo "Examples:"
+    echo "  While solving a Wordle game:"
+    echo "      bgame wordle -x 'iteol' -r 'ars' -n '.[^r][^a]..' -p 's..ar'"
+    echo "  Choosing a random word from the words made with frequent letters (results from first piped as dictionary to try)"
+    echo "      bgame wordle -p '[eariotnslcud]{5}' | bgame wordle_try"
+    echo "  Use a list of primes as the dictionary (for playing primel)"
+    echo "      bgame wordle_try -d ~/primes-to-100k.txt"
+}
+
+function _bgame_wordle_help()
+{
+    echo "A tool to help solving 5-letter word puzzled like Wordle and Absurdle"
+    echo "The output is a list of words limited by the options given"
+    _bgame_wordle_usage "wordle"
+}
+
+function bgame_wordle()
+{
+    _bgame_wordle "$@"
+}
+
+function _bgame_wordle_try_help()
+{
+    echo "A tool to help solving 5-letter word puzzled like Wordle and Absurdle"
+    echo "The output is a single word suggestion selected randomly from the list given by 'bgame wordle'"
+    _bgame_wordle_usage "wordle_try"
+}
+
+function bgame_wordle_try()
+{
+    declare WORDS=()
+
+    if (( BASH_VERSINFO[0] >= 4 )); then
+        mapfile -t WORDS < <(_bgame_wordle "$@")
+    else
+        while read -r WORD; do
+            WORDS+=("${WORD}")
+        done < <(_bgame_wordle "$@")
+    fi
+
+    if (( ${#WORDS[@]} == 0 )); then
+        echo "no words to choose" >&2
+        return 0
+    fi
+
+    if (( ${#WORDS[@]} == 1 )); then
+        echo "only one word to choose" >&2
+        echo "${WORDS[0]}"
+        return 0
+    fi
+
+    # use /dev/urandom because the word list is larger than 32k
+    declare r
+    r=$(head -c 4 /dev/urandom | od -An -tu4 | tr -d ' ')
+
+    declare size=${#WORDS[@]}
+    declare index=$((r % size))
+    echo "${WORDS[$index]} (out of ${size} possible)"
+}
+
 function _limit_length()
 {
     declare LENGTH=${1-:5}
@@ -32,8 +119,6 @@ function _limit_length()
             fi
         done < "${DICTIONARY}"
     fi
-
-
 }
 
 function _exclude_letters()
@@ -79,51 +164,6 @@ function _exclude_pattern()
 {
     cat - | grep -E "$1"
 }
-
-
-function _bgame_wordle_usage
-{
-    echo "Usage:"
-    echo " bgame $1 [-l num | --word-length num]"
-    echo "          [-x 'letters' | --exlcude-letters 'letters' ]"
-    echo "          [-r 'letters' | --require-letters 'letters']"
-    echo "          [-x 'pattern' | --exclude-pattern 'pattern']"
-    echo "          [-r 'pattern' | --require_pattern 'pattern']"
-    echo "          [-d <filename> | --dictionary <filename>]"
-    echo ""
-    echo "      -l, --word_length     - the length of the words to be used in the solving (defaults to 5)"
-    echo "      -x, --exclude_letters - a list of letters to exclude, filters any word with any of these"
-    echo "      -r, --require_letters - a list of letters to require, filters any word without one of these"
-    echo "      -n, --negative_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
-    echo "      -p, --positive_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
-    echo "      -d, --dictionary - a file name to use as the word dictionary. The dictionary can also be provided though STDIN, or the default dictionary setting (see below)"
-    echo
-    echo "The default word list is currently set to '${BGAME_WORD_FILE}'."
-    echo "Change the default word list file by setting 'BGAME_WORD_FILE'."
-    echo "Use the -d or --dictionary option to set the file for a run."
-    echo "To set it permmanently for the session:"
-    echo '      export BGAME_WORD_FILE=/path/to/my_word_list.txt'
-    echo "The dictionary can also be read from STDIN."
-    echo "The dictionary data source will be the first of STDIN (if present), -d <file> (if given), default file."
-    echo
-    echo "The dictionary data must have a single word on each line."
-    echo
-    echo "Examples:"
-    echo "  While solving a Wordle game:"
-    echo "      bgame wordle -x 'iteol' -r 'ars' -n '.[^r][^a]..' -p 's..ar'"
-    echo "  Choosing a random word from the words made with frequent letters (results from first piped as dictionary to try)"
-    echo "      bgame wordle -p '[eariotnslcud]{5}' | bgame wordle_try"
-    echo "  Use a list of primes as the dictionary (for playing primel)"
-    echo "      bgame wordle_try -d ~/primes-to-100k.txt"
-}
-
-function _bgame_wordle_help()
-{
-    echo "A tool to help solving 5-letter word puzzled like Wordle and Absurdle"
-    echo "The output is a list of words limited by the options given"
-    _bgame_wordle_usage "wordle"
-}
-
 
 function _bgame_wordle()
 {
@@ -214,49 +254,4 @@ function _bgame_wordle()
     | _require_letters "${MUST_HAVE}" \
     | _exclude_pattern "${NEGATIVE_PATTERN}" \
     | _require_pattern "${POSITIVE_PATTERN}"
-}
-
-function bgame_wordle()
-{
-    _bgame_wordle "$@"
-}
-
-function _bgame_wordle_try_help()
-{
-    echo "A tool to help solving 5-letter word puzzled like Wordle and Absurdle"
-    echo "The output is a single word suggestion selected randomly from the list given by 'bgame wordle'"
-    _bgame_wordle_usage "wordle_try"
-}
-
-function bgame_wordle_try()
-{
-    declare WORDS=()
-
-    if (( BASH_VERSINFO[0] >= 4 )); then
-        mapfile -t WORDS < <(_bgame_wordle "$@")
-    else
-        while read -r WORD; do
-            WORDS+=("${WORD}")
-        done < <(_bgame_wordle "$@")
-    fi
-
-
-    if (( ${#WORDS[@]} == 0 )); then
-        echo "no words to choose" >&2
-        return 0
-    fi
-
-    if (( ${#WORDS[@]} == 1 )); then
-        echo "only one word to choose" >&2
-        echo "${WORDS[0]}"
-        return 0
-    fi
-
-    # use /dev/urandom because the word list is larger than 32k
-    declare r
-    r=$(head -c 4 /dev/urandom | od -An -tu4 | tr -d ' ')
-
-    declare size=${#WORDS[@]}
-    declare index=$((r % size))
-    echo "${WORDS[$index]} (out of ${size} possible)"
 }
