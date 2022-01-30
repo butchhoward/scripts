@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # To use a different word list, export BGAME_WORD_FILE="<path to word file"
-: "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/english-words/words_alpha.txt"}"
+: "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/scripts/sowpods_eu.txt"}"
 
 function _bgame_wordle_usage
 {
@@ -70,24 +70,147 @@ function bgame_wordle_try()
         done < <(_bgame_wordle "$@")
     fi
 
-    if (( ${#WORDS[@]} == 0 )); then
-        echo "no words to choose" >&2
-        return 0
+    declare RESULT_WORD
+    declare RESULT_SIZE=${#WORDS[@]}
+    declare RESULT_RC=0
+
+    if (( RESULT_SIZE == 0 )); then
+        RESULT_RC=1
+    else
+        declare INDEX
+        if (( RESULT_SIZE == 1 )); then
+            INDEX=0
+        else
+            # use /dev/urandom because the word list is larger than 32k
+            declare r
+            r=$(head -c 4 /dev/urandom | od -An -tu4 | tr -d ' ')
+            INDEX=$((r % RESULT_SIZE))
+        fi
+        RESULT_WORD="${WORDS[${INDEX}]}"
     fi
 
-    if (( ${#WORDS[@]} == 1 )); then
-        echo "only one word to choose" >&2
-        echo "${WORDS[0]}"
-        return 0
+
+    printf "%s (out of %d possible)\n" "${RESULT_WORD}" "${RESULT_SIZE}"
+    return ${RESULT_RC}
+}
+
+
+bgame_wordle_solve()
+{
+    declare EXCLUDED
+    declare REQUIRED
+    declare NEGATIVE_PATTERN
+    declare POSITIVE_PATTERN
+    declare WORD_LENGTH=5
+    declare TRY_WORD
+    declare TRY_POSSIBLE="all the words"
+    declare MATCHES
+    declare -a MISMATCHES
+
+    # read starting word
+    TRY_WORD="$(_prompt_input "Starting Word" "" )"
+    WORD_LENGTH=${#TRY_WORD}
+
+    for (( i=0; i<WORD_LENGTH; ++i)); do
+        MISMATCHES+=('')
+        POSITIVE_PATTERN+='.'
+    done
+
+    while true; do
+        echo "Trying '${TRY_WORD}' (out of ${TRY_POSSIBLE})"
+
+        # input matching letters (green squares)
+        MATCHES="$(_prompt_input "Matching Letters" "${POSITIVE_PATTERN}" )"
+        declare OLD_POSITIVE="$POSITIVE_PATTERN}"
+        POSITIVE_PATTERN=''
+        for (( i=0; i<WORD_LENGTH; i++ )); do
+            declare CURRENT_C="${MATCHES:$i:1}"
+            if [[ "${CURRENT_C}" == '.' ]] || [[ -z "${CURRENT_C}" ]]; then
+                CURRENT_C="${OLD_POSITIVE:$i:1}"
+            fi
+            POSITIVE_PATTERN+="${CURRENT_C}"
+        done
+
+        declare MATCHES_X
+        MATCHES_X="$( echo "${MATCHES}" | sed -E -e 's/[^[:alpha:]]//g' -e "s/[+${REQUIRED}]//g" )"
+        REQUIRED="${REQUIRED}${MATCHES_X}"
+
+        # input wrong position letters
+        MISMATCHES_X="$(_prompt_input "Misplaced Letters" "....." )"
+
+        for (( i=0; i<${#MISMATCHES_X}; i++ )); do
+            declare CURRENT_C="${MISMATCHES_X:$i:1}"
+            if [[ "${CURRENT_C}" == '.' ]]; then
+                continue
+            fi
+            REQUIRED+="${CURRENT_C}"
+            MISMATCHES[i]+="${CURRENT_C}"
+        done
+
+        NEGATIVE_PATTERN=''
+        for (( i=0; i<${#MISMATCHES[@]}; i++ )); do
+            declare PAT='.'
+            if [[ -n "${MISMATCHES[$i]}" ]]; then
+                PAT="[^+${MISMATCHES[$i]}]"
+            fi
+            NEGATIVE_PATTERN+="${PAT}"
+        done
+
+        declare NEW_EXCLUDED
+        NEW_EXCLUDED="$(echo "${TRY_WORD}" | sed -E -e "s/[+${REQUIRED}]//g" )"
+        EXCLUDED+="${NEW_EXCLUDED}"
+
+        # try for new word
+        # break if > 6 tries
+        # break is only one possible solution
+        # break is 5 matching letters
+        echo "bgame wordle_try -r '${REQUIRED}' -x '${EXCLUDED}' -n '${NEGATIVE_PATTERN}' -p '${POSITIVE_PATTERN}' $* -l ${WORD_LENGTH}"
+
+        declare TRY
+        declare WORD
+        declare COUNT
+        TRY="$(bgame wordle_try -r "${REQUIRED}" -x "${EXCLUDED}" -n "${NEGATIVE_PATTERN}" -p "${POSITIVE_PATTERN}" "$@" -l "${WORD_LENGTH}")"
+
+        # wring (out of 5 possible) |  (out of 0 possible)
+        WORD="$(echo "${TRY}" | sed -E -e 's/(.*)\(.*/\1/g' )"
+        COUNT="$(echo "${TRY}" | sed -E -e 's/([[:alpha:][:space:]]+)\(out of ([[:digit:]]+).*/\2/g' )"
+
+        if (( COUNT == 1 )); then
+            echo "solved: ${WORD}"
+            break
+        elif (( COUNT == 0)); then
+            echo "invalid try: '${WORD}' (probably mistyped the matching or misplaced letters)"
+        else
+            TRY_WORD="${WORD}"
+            TRY_POSSIBLE=${COUNT}
+        fi
+    done
+}
+
+function _read_safe()
+{
+    local RESPONSE
+    if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+        read -e -p "$1" -r RESPONSE
+    else
+        read -e -p "$1" -i "$2" -r RESPONSE
     fi
+    echo "${RESPONSE}"
+}
 
-    # use /dev/urandom because the word list is larger than 32k
-    declare r
-    r=$(head -c 4 /dev/urandom | od -An -tu4 | tr -d ' ')
+function _prompt_input()
+{
+    # usage: prompt_input "message" [default]
+    # STDOUT gets the value entered
 
-    declare size=${#WORDS[@]}
-    declare index=$((r % size))
-    echo "${WORDS[$index]} (out of ${size} possible)"
+    local PROMPT="${1:-"Prompt"}: "
+    local DEFAULT="${2}"
+
+    # read -e -p "${PROMPT}" -i "${DEFAULT}" -r RESPONSE
+    local RESPONSE
+    RESPONSE="$(_read_safe "${PROMPT}" "${DEFAULT}")"
+
+    echo "${RESPONSE}"
 }
 
 function _limit_length()
