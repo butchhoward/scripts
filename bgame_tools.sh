@@ -63,7 +63,12 @@ function bgame_wordle_try()
     declare WORDS=()
 
     if (( BASH_VERSINFO[0] >= 4 )); then
-        mapfile -t WORDS < <(_bgame_wordle "$@")
+        declare WORDLE_FD WORDLE_PID
+        exec {WORDLE_FD}< <(_bgame_wordle "$@")
+        WORDLE_PID=$!
+        mapfile -t WORDS <& "${WORDLE_FD}"
+        exec {WORDLE_FD}<&-
+        wait "${WORDLE_PID}" || return 1
     else
         while read -r WORD; do
             WORDS+=("${WORD}")
@@ -246,8 +251,8 @@ function _bgame_wordle()
             ;;
 
         *)
-            echo "unknown option: '$1'"
-            _bgame_wordle_usage 'wordle|wordle_try'
+            echo "unknown option: '$1'" >&2
+            _bgame_wordle_usage 'wordle|wordle_try' >&2
             return 1
             ;;
         esac
