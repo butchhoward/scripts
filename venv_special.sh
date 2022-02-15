@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# These need to be in the current terminal session because the modify the
+# These need to be in the current terminal session because they modify the
 # active environment
 
 function venv_deactivate()

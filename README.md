@@ -22,11 +22,10 @@ Add these lines to the `.bash_profile` or `.bashrc` to set the path and to enabl
 
 ```shell
 #bhtools
-export BHTOOLS_PROJECTS_PATH="$HOME/projects"  # a path to the folder where all my project live
+export BHTOOLS_PROJECTS_PATH="$HOME/projects/bh"  # a path to the folder where all my project live
 BHTOOLS_PATH="${BHTOOLS_PROJECTS_PATH}/scripts"
-if [ -f "${BHTOOLS_PATH}/scripts.sh" ]; then source "${BHTOOLS_PATH}/scripts.sh"; fi
+[[ -f "${BHTOOLS_PATH}/scripts.sh" ]] && source "${BHTOOLS_PATH}/scripts.sh"
 export PATH="${BHTOOLS_PATH}:$PATH"
-
 source "${BHTOOLS_PATH}/b_autocomplete.sh"
 ```
 

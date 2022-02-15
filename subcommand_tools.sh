@@ -19,7 +19,7 @@ function subcommand_help()
     local BASE_COMMAND="${1}"
     local SUB_COMMAND="${2}"
 
-    if [ -z "${SUB_COMMAND}" ]; then
+    if [[ -z "${SUB_COMMAND}" ]]; then
         local HELP_FUNCTION="_${BASE_COMMAND}_help"
         if type -t "${HELP_FUNCTION}" &> /dev/null; then
             "${HELP_FUNCTION}"
@@ -47,14 +47,14 @@ function subcommand_help()
 # Do the work for sub commands that do not need any extra effort
 
 TOOLS_FILE="${LOCATION}/${BASE_COMMAND}_tools.sh"
-if [ -f  "${TOOLS_FILE}" ]; then
+if [[ -f  "${TOOLS_FILE}" ]]; then
     source "${TOOLS_FILE}"
 else
     echo "can't find: ${TOOLS_FILE}" >&2
     return 1
 fi
 
-if [ $# -eq 0 ]; then
+if (( $# == 0 )); then
     subcommand_list "${BASE_COMMAND}"
     exit 0
 fi
@@ -63,7 +63,7 @@ SUB_CMD="${1}"
 shift
 
 case "${SUB_CMD}" in
-    help|-h|-?)
+    help|--help|-h|-[?])
         subcommand_help "${BASE_COMMAND}" "$@"
         exit 0
         ;;
