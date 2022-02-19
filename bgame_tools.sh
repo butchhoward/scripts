@@ -139,13 +139,8 @@ function _exclude_letters()
     fi
 
     declare letters="$1"
-    declare pattern="${letters:0:1}"
 
-    for (( i=1; i<${#letters}; i++ )); do
-        pattern="${pattern}|${letters:$i:1}"
-    done
-
-    cat - | grep -v -E -e "${pattern}"
+    cat - | grep -E -e "[^${letters}]{5}"
 }
 
 function _require_letters()
