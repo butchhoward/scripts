@@ -6,4 +6,4 @@
 #     pip uninstall -y "${package}"
 # done < <(pip freeze)
 
-pip freeze | xargs pip uninstall -y
+pip list --format freeze --exclude pip --exclude wheel --exclude setuptools --exclude distribute  | xargs -t -n 1 -I {} pip uninstall -y '{}'
