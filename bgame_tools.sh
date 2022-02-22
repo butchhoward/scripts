@@ -9,15 +9,15 @@ function _bgame_wordle_usage
     echo " bgame $1 [-l num | --word-length num]"
     echo "          [-x 'letters' | --exlcude-letters 'letters' ]"
     echo "          [-r 'letters' | --require-letters 'letters']"
-    echo "          [-x 'pattern' | --exclude-pattern 'pattern']"
-    echo "          [-r 'pattern' | --require_pattern 'pattern']"
+    echo "          [[-n 'pattern' | --negative-pattern 'pattern'] ...]"
+    echo "          [-p 'pattern' | --positive-pattern 'pattern']"
     echo "          [-d <filename> | --dictionary <filename>]"
     echo ""
     echo "      -l, --word_length     - the length of the words to be used in the solving (defaults to 5)"
-    echo "      -x, --exclude_letters - a list of letters to exclude, filters any word with any of these"
-    echo "      -r, --require_letters - a list of letters to require, filters any word without one of these"
-    echo "      -n, --negative_pattern - a regex pattern for excluding letters by position e.g. '..[^ae]..' to reject words with 'ae' in the 3rd letter"
-    echo "      -p, --positive_pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
+    echo "      -x, --exclude-letters - a list of letters to exclude, filters any word with any of these"
+    echo "      -r, --require-letters - a list of letters to require, filters any word without one of these"
+    echo "      -n, --negaative-pattern - regex pattern(s) for excluding letters by position (can used multiple times) e.g. -n '..a..' -n '..e..' to reject words with 'a' or 'e' in the 3rd letter"
+    echo "      -p, --positive-pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
     echo "      -d, --dictionary - a file name to use as the word dictionary. The dictionary can also be provided though STDIN, or the default dictionary setting (see below)"
     echo
     echo "The default word list is currently set to '${BGAME_WORD_FILE}'."
@@ -167,7 +167,42 @@ function _require_pattern()
 
 function _exclude_pattern()
 {
-    cat - | grep -E "$1"
+
+    declare WORD_LENGTH="$1"
+    shift
+
+    if (( "$#" == 0 )) ; then
+        cat -
+        return $?
+    fi
+
+    # build regex pattern from multiple simple patterns passed in
+    # '..a..' '.a.o.' '.d...' -> '.[^ad][^a][^o].'
+
+
+    declare letter_sets=()
+    while (( "$#" != 0 )); do
+        declare letters="$1"
+        for (( i=0; i<WORD_LENGTH; i++ )); do
+            if [[ "${letters:$i:1}" != "." ]]; then
+                letter_sets[$i]="${letter_sets[$i]}${letters:$i:1}"
+            fi
+        done
+        shift
+    done
+
+    declare pattern
+    for (( i=0; i<WORD_LENGTH; i++)); do
+        if [[ -z "${letter_sets[$i]}" ]]; then
+            pattern+="."
+        else
+            pattern+="[^${letter_sets[$i]}]"
+        fi
+    done
+    declare cmd="grep -E '${pattern}'"
+
+    echo "-x: ${cmd}" 1>&2
+    cat - | eval "${cmd}"
 }
 
 function _bgame_wordle()
@@ -175,7 +210,7 @@ function _bgame_wordle()
     declare WORD_LENGTH=5
     declare EXCLUDE
     declare MUST_HAVE
-    declare NEGATIVE_PATTERN
+    declare NEGATIVE_PATTERNS=()
     declare POSITIVE_PATTERN
     declare DICTIONARY
 
@@ -216,12 +251,12 @@ function _bgame_wordle()
             ;;
 
         -n|--negative-pattern)
-            NEGATIVE_PATTERN="$2"
+            NEGATIVE_PATTERNS+=("$2")
             shift
             shift
             ;;
         -n=*|--negative-pattern=*)
-            NEGATIVE_PATTERN="${1##*=}"
+            NEGATIVE_PATTERNS=("${1##*=}")
             shift
             ;;
 
@@ -257,6 +292,6 @@ function _bgame_wordle()
     _limit_length "${WORD_LENGTH}" "${DICTIONARY}" \
     | _exclude_letters "${EXCLUDE}" \
     | _require_letters "${MUST_HAVE}" \
-    | _exclude_pattern "${NEGATIVE_PATTERN}" \
+    | _exclude_pattern "${WORD_LENGTH}" "${NEGATIVE_PATTERNS[@]}" \
     | _require_pattern "${POSITIVE_PATTERN}"
 }
