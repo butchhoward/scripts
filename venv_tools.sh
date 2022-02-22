@@ -49,12 +49,17 @@ function _venv_def_py_help()
 
 function venv_def_py()
 {
-    pyenv versions | sed 's/^  //g' | sed 's/^* //g' | sed 's/(.*$//g' | sed 's/ *$//' | grep '^\d' | tail -1
+    pyenv versions | sed -e 's/^  //g' -e 's/^* //g' -e 's/(.*$//g' -e 's/ *$//' | grep '^\d' | tail -1
+}
+
+function venv_py_available()
+{
+    pyenv install --list | sed 's/^  //' | grep '^\d' | grep --invert-match 'dev\|a\|b'
 }
 
 function venv_newest_py()
 {
-    pyenv install --list | sed 's/^  //' | grep '^\d' | grep --invert-match 'dev\|a\|b' | tail -1
+    venv_py_available | tail -1
 }
 
 function _venv_location_help()
