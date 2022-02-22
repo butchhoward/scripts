@@ -201,7 +201,6 @@ function _exclude_pattern()
     done
     declare cmd="grep -E '${pattern}'"
 
-    echo "-x: ${cmd}" 1>&2
     cat - | eval "${cmd}"
 }
 
