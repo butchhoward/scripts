@@ -202,14 +202,22 @@ function _venv_activate()
     fi
 }
 
-function venv_pip_requirements()
+function _venv_pip_requirements_help()
 {
     echo "venv pip_requirements [requirements_file]"
     echo "  If the file name is not given, ./requirements.txt will be used."
 }
+
 function venv_pip_requirements()
 {
-    local requirements_file=${1:-"requirements.txt"}
+    declare requirements_file=${1:-"requirements.txt"}
+
+    if [[ -z "$1" ]]; then
+        if [[ -r "requirements-dev.txt" ]]; then
+            requirements_file="requirements-dev.txt"
+        fi
+    fi
+
     echo "REQUIREMENTS: ${requirements_file}"
     if [ -a "${requirements_file}" ]; then
         pip install --upgrade -r "${requirements_file}"
