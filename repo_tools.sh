@@ -228,6 +228,24 @@ function repo_delete_all_local_branches()
     repo_prune_remote_branches
 }
 
+
+function _repo_delete_remote_branch_help()
+{
+    echo "repo delete_remote_branch branch_name [remote_name]"
+    echo "  Delete the branch from the remote repository"
+    echo "  remote_name defaults to 'origin'"
+    echo
+    echo "** Have a care, this deletes the branch from the remote. **"
+}
+
+function repo_delete_remote_branch()
+{
+    declare BRANCH=${1:?"remote branch to delete is required"}
+    declare REMOTE=${2:-"origin"}
+
+    git push "${REMOTE}" --delete "${BRANCH}"
+}
+
 DEFAULT_WIP_BRANCH='__wip__'
 
 function _repo_wip_merge_help()
