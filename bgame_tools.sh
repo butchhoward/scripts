@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # To use a different word list, export BGAME_WORD_FILE="<path to word file"
-: "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/scripts/sowpods_eu.txt"}"
+: "${BGAME_WORD_FILE:="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/scripts/dict_wordle_winners.txt"}"
 
 function _bgame_wordle_usage
 {
@@ -12,6 +12,8 @@ function _bgame_wordle_usage
     echo "          [[-n 'pattern' | --negative-pattern 'pattern'] ...]"
     echo "          [-p 'pattern' | --positive-pattern 'pattern']"
     echo "          [-d <filename> | --dictionary <filename>]"
+    echo "          [--dw ]"
+    echo "          [--dv ]"
     echo ""
     echo "      -l, --word_length     - the length of the words to be used in the solving (defaults to 5)"
     echo "      -x, --exclude-letters - a list of letters to exclude, filters any word with any of these"
@@ -19,6 +21,8 @@ function _bgame_wordle_usage
     echo "      -n, --negaative-pattern - regex pattern(s) for excluding letters by position (can used multiple times) e.g. -n '..a..' -n '..e..' to reject words with 'a' or 'e' in the 3rd letter"
     echo "      -p, --positive-pattern - a regex pattern for requiring letters by position e.g. '..a.e' to reject words without 'a' in the 3rd letter and 'e' in the 5th"
     echo "      -d, --dictionary - a file name to use as the word dictionary. The dictionary can also be provided though STDIN, or the default dictionary setting (see below)"
+    echo "      --dw - use the wordles winning-words dictionary"
+    echo "      --dv - use the wordles valid-words dictionary. This is the default dictionary."
     echo
     echo "The default word list is currently set to '${BGAME_WORD_FILE}'."
     echo "Change the default word list file by setting 'BGAME_WORD_FILE'."
@@ -278,6 +282,15 @@ function _bgame_wordle()
             DICTIONARY="${1##*=}"
             shift
             ;;
+        --dw)
+            DICTIONARY="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/scripts/dict_wordle_winners.txt"
+            shift
+            ;;
+        --dv)
+            DICTIONARY="${BHTOOLS_PROJECTS_PATH:-$HOME/projects}/scripts/dict_wordle_valid.txt"
+            shift
+            ;;
+
 
         *)
             echo "unknown option: '$1'" >&2
