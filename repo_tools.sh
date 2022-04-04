@@ -302,7 +302,11 @@ function repo_wip_rebase()
     git checkout "${DEFAULT_WIP_BRANCH}" || return $?
     if ! git rebase "${BASE_BRANCH}"; then
         r=$?
+        echo
+        echo "=========="
         echo "Resolve all conflicts then 'repo wip_merge ${BASE_BRANCH}' to complete"
+        echo "=========="
+        echo
         return $r
     fi
 
