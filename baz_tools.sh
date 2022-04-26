@@ -20,7 +20,7 @@ function baz_repositories()
 {
     local REGISTRY="${1:-"${DEFAULT_REGISTRY}"}"
 
-    az acr repository list --name "${REGISTRY}" | jq -r '.[]'
+    az acr repository list --name "${REGISTRY}" 2>/dev/null | jq -r '.[]'
 }
 
 function _baz_repository_tags_help()
@@ -39,7 +39,7 @@ baz_repository_tags()
     local REPOSITORY="${1:?"requires repository name"}"
     local REGISTRY="${2:-"${DEFAULT_REGISTRY}"}"
 
-    az acr repository show-manifests --name "${REGISTRY}" --repository "${REPOSITORY}" | jq -r '.[].tags[]'
+    az acr manifest list-metadata  "${REGISTRY}".azurecr.io/"${REPOSITORY}" 2>/dev/null | jq -r '.[].tags | select(. != null) | .[]'
 }
 
 
