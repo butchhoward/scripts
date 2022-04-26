@@ -205,7 +205,7 @@ function _venv_activate()
 function _venv_pip_requirements_help()
 {
     echo "venv pip_requirements [requirements_file]"
-    echo "  If the file name is not given, ./requirements.txt will be used."
+    echo "  If the file name is not given, ./requirements-dev.txt will be used if present, else ./requirements.txt"
 }
 
 function venv_pip_requirements()
