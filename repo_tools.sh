@@ -338,6 +338,43 @@ function repo_committers()
     printf "%s\n" "${!COMMITTERS[@]}"
 }
 
+function _repo_squash_summary_help()
+{
+    echo "repo squash_summary parent_branch current_branch"
+    echo "  parent_branch is required, it should be the older branch/commit point"
+    echo "  current_branch is required, it should be the newer branch/commit point"
+    echo
+    echo "  List all commit messages between the two commit points"
+
+}
+
+function repo_squash_summary()
+{
+    local PARENT=${1:?"parent branch for compare is required"}
+    local CURRENT_BRANCH=${2:?"working branch for compare is required"}
+
+    git log --format='%B%n' "${PARENT}".."${CURRENT_BRANCH}"
+}
+
+function _repo_squash_summary_changelog_help()
+{
+    echo "repo squash_summary older_commit newer_commit"
+    echo "  older_commit is required, it should be the older branch/commit point"
+    echo "  newer_commit is required, it should be the newer branch/commit point"
+    echo
+    echo "  List all commit messages between the two commit points"
+    echo "  Kinda sorta format them as markdown bullets to be added to a change log document"
+
+}
+
+function repo_squash_summary_changelog()
+{
+    local OLDER_COMMIT=${1:?"starting commit required"}
+    local NEWER_COMMIT=${2:?"ending commit reqired"}
+
+    git log --format='* %B%n' "${OLDER_COMMIT}".."${NEWER_COMMIT}"
+}
+
 function _repo_squash_branch_help()
 {
     echo "repo squash_branch <message> [parent_branch]"
@@ -349,14 +386,6 @@ function _repo_squash_branch_help()
     echo "  Add all Co-authors to the commit message"
     echo "  Add a list of all files changed to the commit message"
     echo "(there is no editing of this before it is committed)"
-}
-
-function repo_get_squash_summary()
-{
-    local PARENT=${1:?"parent branch for compare is required"}
-    local CURRENT_BRANCH=${2:?"working branch for compare is required"}
-
-    git log --format='%B%n' "${PARENT}".."${CURRENT_BRANCH}"
 }
 
 function repo_squash_branch()
@@ -375,7 +404,7 @@ ${COMMIT_SUMMARY}
 
 Squashed '${CURRENT_BRANCH}' relative to '${PARENT}'
 ------------
-$(repo_get_squash_summary "${PARENT}" "${CURRENT_BRANCH}")
+$(repo_squash_summary "${PARENT}" "${CURRENT_BRANCH}")
 ------------
 $(repo_committers "${PARENT}" "${CURRENT_BRANCH}")
 
@@ -418,4 +447,49 @@ function repo_clone_many()
         git clone "git@${HOST}/${REPO_NAME}.git"
     done
 
+}
+
+
+function _repo_delete_tag_help()
+{
+    echo "repo delete_tag <tag>"
+    echo
+    echo "  tag     - the tag to delete"
+    echo
+    echo "Delete a tag locally and remote on the origin remote"
+    echo
+
+}
+
+function repo_delete_tag()
+{
+
+    declare TAG="$1"
+
+    git tag -d "${TAG}"
+    git push origin :refs/tags/"${TAG}"
+
+}
+
+function _repo_update_tag_help()
+{
+    echo "repo update_tag <tag> [message]"
+    echo
+    echo "  tag     - the tag to update"
+    echo "  message - the message for the tag"
+    echo
+    echo "Update a tag locally and remote on the origin remote"
+    echo "Applies the tag to the current commit and pushes that tag to the origin remote."
+    echo
+
+}
+
+function repo_update_tag()
+{
+    declare TAG="$1"
+    declare MESSAGE="${2:-'update tag'}"
+
+    repo_delete_tag "${TAG}"     && \
+    git tag -f -a "${TAG}" -m "${MESSAGE}"  && \
+    git push origin --tags
 }
