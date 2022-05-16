@@ -424,6 +424,7 @@ declare -a IPS_TO_CHECK
 function set_opt_q()
 {
     QUIETLY=true
+    return 0
 }
 
 function set_opt_Q()
@@ -445,6 +446,7 @@ function set_opt_W()
 function set_opt_x()
 {
     LIST_PREP_COMMAND="external_list"
+    return 0
 }
 
 function set_opt_v()
@@ -456,6 +458,7 @@ function set_opt_v()
 function set_opt_d()
 {
     LIST_PREP_COMMAND="default_list"
+    return 0
 }
 
 function set_opt_D()
@@ -466,10 +469,12 @@ function set_opt_D()
     else
         DIG_LOCAL=true
     fi
+    return 0
 }
 function set_opt_u()
 {
     ANNOUNCE_UP=true
+    return 0
 }
 function set_opt_F()
 {
