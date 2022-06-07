@@ -385,7 +385,7 @@ function _repo_squash_branch_help()
     echo "  Add all commit messages to the commit message for the squashed commit"
     echo "  Add all Co-authors to the commit message"
     echo "  Add a list of all files changed to the commit message"
-    echo "(there is no editing of this before it is committed)"
+    echo "There commit message will be opened in your editor before completing the commit."
 }
 
 function repo_squash_branch()
@@ -416,7 +416,7 @@ EOM
 
     git reset "$(git merge-base "${PARENT}" "${CURRENT_BRANCH}")" || return 2
     git add -A
-    git commit -m "${COMMIT_MSG}"
+    git commit --edit -m "${COMMIT_MSG}"
 }
 
 
