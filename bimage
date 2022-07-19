@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASE_COMMAND="$(basename "${BASH_SOURCE[0]}")"
+
+source "${LOCATION}"/subcommand_tools.sh
