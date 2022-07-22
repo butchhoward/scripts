@@ -1,0 +1,269 @@
+/* ==UserStyle==
+@name           pinboard
+@namespace      github.com/butchhoward/scripts/stylus_styles
+@version        1.0.0
+@description    Pinboard styling
+@author         Butch Howard <butchhoward@gmail.com> (https://butchhoward.com)
+@license        CC-BY-SA-4.0
+==/UserStyle== */
+
+@-moz-document domain("pinboard.in") {
+
+.private a { padding:1px;border:0px;}
+.private { background:#f2f2f2;border:1px solid #ddd }
+.unread { color:#a41 }
+
+
+/* .star
+{
+  color:#ccc;
+  margin-left:-20px;
+  font-size:1.3em;
+  cursor:pointer;
+  float:left;
+}
+ */
+ .selected_star { color:#22a; }
+
+
+.star {
+    font-size:11px !important;
+    display:inline-block;
+    font-weight:bold;
+    margin: 0px 10px -25px -20px;}
+.star span {visibility:hidden}
+.star:before {content: "♥"}
+.selected_star, .star:hover {color:#cc0066!important}
+
+
+
+ .bookmark
+{
+  padding:3px;
+  padding-bottom:10px;
+/*max-width:600px;*/
+  width:95%;
+  margin-left:0px;
+  float:left;
+  margin-bottom:1.3em;
+ }
+
+/* book marks */
+
+#bookmarks .private {background:#fff!important}
+
+.bookmark {
+	border: none !important;
+}
+
+.bookmark_title { line-height:130%;font-size:110%;overflow-wrap:anywhere }
+
+#edit_bookmark_form
+{
+  border: 0px solid #aaa;
+
+  width:500px;
+  padding:4px;
+  padding-left:10px;
+  float:left;
+  color:#888;
+  display:none;
+  visibility:hidden;
+}
+
+#edit_bookmark_form p
+{
+  line-height:100%;
+  margin-bottom:0px;
+  color:#888;
+}
+
+#edit_bookmark_form input
+{
+  font-size:90%;
+  border:1px solid #ddd;
+  margin-bottom:3px;
+}
+
+#edit_bookmark_form textarea
+{
+  font-size:90%;
+  border:1px solid #ddd;
+  margin-bottom:3px;
+}
+
+.edit_form_input
+{
+    width:490px;
+    margin-top:10px;
+    font-size:12px;
+    padding-top:3px;
+}
+#edit_form_checkboxes
+{
+    margin-top:10px;
+    margin-bottom:10px;
+}
+#edit_form_suggested_tags
+{
+    margin-top:10px;
+    margin-bottom:18px;
+}
+
+
+
+a.tag {color:#a51;line-height:190%;}
+a.delete { color:#aaa }
+a.delete:visited { color:#aaa }
+a.edit { color: #aaa }
+.faint {color:#aaa}
+a.edit:visited { color:#ccc }
+
+.confirm { color:red;visibility:hidden;display:none; }
+.delete_link { display:inline; }
+.when {  font-size:90%;color:#777 }
+
+.url_link
+{
+    font-size:90%;color:#888;
+}
+
+
+ .description {line-height:120%;margin-top:2px;color:#555}
+
+.edit_checkbox
+{
+  display:none;
+  float:left;
+  margin-left:-10px;
+  width:45px;
+}
+
+.cached {color:#aaa}
+.cached:visited {color:#aaa}
+
+#tag_cloud a.selected {font-weight:bold;color:#333}
+#tag_cloud table{ line-height:100%;}
+#tag_cloud_header a { color:#aaa; }
+
+a.fetch_err { font-size:80%;color:red;font-weight:bold}
+
+
+
+a {color:#292929!important;padding:2px}
+a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!important;color:#FFF!important}
+
+#pinboard {
+	text-align: left !important;
+}
+
+#content {
+	width: 80% !important;
+}
+
+#top_menu a {
+    color: #aaa !important;
+}
+#top_menu a:hover {
+    color: #eee !important;
+    background-color: #999 !important;
+}
+
+.display .when {
+    color: #bbb !important;
+    margin-left: 0px !important;
+    padding-left: 0px !important;}
+
+.display {border:none  !important;
+	width:100%;
+	padding:0 0 20px
+}
+
+.display .bookmark_title {
+    font-weight: normal;
+    font-size: 12px !important;
+    line-height: 12px;
+    margin:0 0 2px;}
+
+.display a.bookmark_title {color:#292929;}
+
+.display a.unread {
+    font-weight: bold;
+	background:none;
+}
+
+.display a.bookmark_title:hover {color:#ff0099}
+
+.display .description {
+    font:12px Georgia !important;
+    margin:5px 0;
+    padding:3px !important;
+    background:#EEE}
+
+.display .tag {
+    display:none;
+}
+
+.display .source {
+    font-size:11px;
+    display:inline-block;
+    margin:5px 0 !important;
+    padding:0 !important;
+    text-decoration: underline !important;
+    color: #aaa !important;}
+
+.display .edit_links a {
+    color: #aaa !important;
+    font-size:8px !important;
+}
+
+.user_navbar a, #tag_cloud_header a {
+    font-size:13px !important;
+    color:#059ece !important;
+    font-weight:bold}
+
+#nextprev .next_prev {
+    font-size: 16px !important;
+    color: #666 !important;
+    background-color: #f0f0f0;
+    padding: 0 3px !important;
+}
+#nextprev a:hover {
+    color: #fff !important;
+    background-color: #999 !important;
+}
+
+
+
+
+/* EDIT CONTROLS */
+
+#edit_bookmark_form .edit_form_input {
+    font-size: 13px !important;
+}
+
+#edit_bookmark_form .description {
+    font-family: "Lucida Grande" !important;
+    height: 8em !important;
+    font-size: 13px !important;
+    line-height: 18px !important;
+}
+
+#edit_bookmark_form .submit {
+    font-size:18px !important;
+}
+
+#edit_bookmark_form .reset {
+    font-size:14px !important;
+    border-color: #f0f0f0 !important;
+    background-color: #fdfdfd !important;
+    color: #999 !important;
+}
+
+
+
+
+/* Tag Clound */
+
+
+}

@@ -1,0 +1,53 @@
+/* ==UserStyle==
+@name           overcast
+@namespace      github.com/butchhoward/scripts/stylus_styles
+@version        1.0.0
+@description    Overcast styling
+@author         Butch Howard <butchhoward@gmail.com> (https://butchhoward.com)
+@license        CC-BY-SA-4.0
+==/UserStyle== */
+
+@-moz-document url-prefix("https://overcast.fm/podcasts") {
+
+body {
+	max-width: 90%;
+}
+
+.pure-u-sm-3-5 {
+	width: 90%;
+}
+
+.nav:after {
+	font-size: 0.8em;
+	font-weight: normal;
+	content: "Stylish Styles Applied"
+}
+
+.feedcell {
+	position: inherit;
+	height: auto;
+	width: auto;
+}
+.feedcell .art {
+	position: relative;
+	height: 0;
+	width: 0;
+	visibility: hidden;
+}
+
+.feedcell .cellcontent {
+	position: relative;
+	left: 0;
+	top: 0;
+	height: auto;
+	width: auto;
+}
+
+.feedcell .cellcontent .titlestack {
+	position: relative;
+	left: 0;
+	top: 0;
+	transform: none;
+}
+
+}

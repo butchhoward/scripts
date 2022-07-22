@@ -1,0 +1,18 @@
+
+/* ==UserStyle==
+@name           youtube
+@namespace      github.com/butchhoward/scripts/stylus_styles
+@version        1.0.0
+@description    Overcast styling
+@author         Butch Howard <butchhoward@gmail.com> (https://butchhoward.com)
+@license        CC-BY-SA-4.0
+==/UserStyle== */
+
+@-moz-document url-prefix("https://www.youtube.com/") {
+
+/* hide the end screen ads */
+.ytp-ce-element {
+    visibility: hidden !important;
+}
+
+}
