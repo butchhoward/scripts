@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091,SC2034
+
 #source this script to get the useful functions
 LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

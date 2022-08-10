@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1090,SC1091
 
 # These need to be in the current terminal session because they modify the
 # active environment
