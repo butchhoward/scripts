@@ -67,15 +67,10 @@ br {
     background:#fff!important
  }
 
- /* use tricky css to force this to table display to get a line break
-    to compensate for the br being nothingness now
-    https://css-tricks.com/injecting-line-break/
-  */
 .bookmark_title {
   line-height:130%;
   font-size:110%;
   overflow-wrap:anywhere ;
-  display: table;
 }
 
 
