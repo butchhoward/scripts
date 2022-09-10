@@ -24,10 +24,6 @@
 }
 */
 
-/* pinboard uses br in places not wrapped in css elements, just make them all go away and compensate in css */
-br {
-    display:none;
-}
 
 .private a { padding:1px;border:0px;}
 .private { background:#f2f2f2;border:1px solid #ddd }
@@ -49,8 +45,17 @@ br {
 
 /* book marks */
 
- .bookmark
-{
+/* pinboard uses br in places not wrapped in css elements, just make them all go away and compensate in css
+*/
+#bookmarks br {
+    display:none;
+}
+
+#bookmarks .private {
+    background:#fff!important
+ }
+
+.bookmark {
   padding:0px;
   padding-bottom:3px;
   padding-top:5px;
@@ -63,9 +68,6 @@ br {
   color:#bbb
  }
 
-#bookmarks .private {
-    background:#fff!important
- }
 
 .bookmark_title {
   line-height:130%;
