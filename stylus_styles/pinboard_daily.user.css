@@ -47,21 +47,21 @@ br {
 .selected_star, .star:hover {color:#cc0066!important}
 
 
+/* book marks */
 
  .bookmark
 {
   padding:0px;
   padding-bottom:3px;
   padding-top:5px;
-/*max-width:600px;*/
   width:95%;
   margin-left:0px;
   float:left;
   margin-bottom:0.3em;
   border: none !important;
+  font-size:90%;
+  color:#bbb
  }
-
-/* book marks */
 
 #bookmarks .private {
     background:#fff!important
@@ -172,7 +172,11 @@ a.fetch_err { font-size:80%;color:red;font-weight:bold}
 
 
 a {color:#292929!important;padding:2px}
-a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!important;color:#FFF!important}
+
+a:hover{background:#bbb!important;color:#000!important}
+
+.user_navbar a:hover,#tag_cloud_header a:hover {background:#bbb!important;color:#000!important}
+
 
 #pinboard {
 	text-align: left !important;
@@ -204,7 +208,12 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
     font-weight: normal;
     font-size: 12px !important;
     line-height: 12px;
-    margin:0 0 2px;}
+    margin:0 0 2px;
+    color: #000 !important;
+ }
+
+.display a {color:#bbb!important;padding:2px}
+.display a:hover {color:#bbb!important;color:#000!important;padding:2px}
 
 .display a.bookmark_title {color:#292929;}
 
@@ -212,8 +221,6 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
     font-weight: bold;
 	background:none;
 }
-
-.display a.bookmark_title:hover {color:#ff0099}
 
 .display .description {
     font:12px Georgia !important;
