@@ -9,19 +9,39 @@
 
 @-moz-document domain("pinboard.in") {
 
+/* Debuggity CSS - uncomment block below to see outlines */
+/*
+* {
+    outline-style: solid !important;
+    outline-width: 1px !important;
+    background-color: rgba(76, 147, 78, .1) !important;
+}
+*:nth-child(even) {
+    outline-color: coral !important;
+}
+*:nth-child(odd) {
+    outline-color: aqua !important;
+}
+*/
+
+/* pinboard uses br in places not wrapped in css elements, just make them all go away and compensate in css */
+br {
+    display:none;
+}
+
 .private a { padding:1px;border:0px;}
 .private { background:#f2f2f2;border:1px solid #ddd }
 .unread { color:#a41 }
 
-.selected_star { color:#22a; }
+ .selected_star { color:#22a; }
 
 .star {
     font-size:11px !important;
     display:inline-block;
     font-weight:bold;
     margin: 0px 10px -25px -20px;
-    visibility:hidden;
-}
+    display:none;
+ }
 .star span {visibility:hidden}
 .star:before {content: "♥"}
 .selected_star, .star:hover {color:#cc0066!important}
@@ -30,24 +50,34 @@
 
  .bookmark
 {
-  padding:3px;
-  padding-bottom:10px;
+  padding:0px;
+  padding-bottom:3px;
+  padding-top:5px;
 /*max-width:600px;*/
   width:95%;
   margin-left:0px;
   float:left;
-  margin-bottom:1.3em;
+  margin-bottom:0.3em;
+  border: none !important;
  }
 
 /* book marks */
 
-#bookmarks .private {background:#fff!important}
+#bookmarks .private {
+    background:#fff!important
+ }
 
-.bookmark {
-	border: none !important;
+ /* use tricky css to force this to table display to get a line break
+    to compensate for the br being nothingness now
+    https://css-tricks.com/injecting-line-break/
+  */
+.bookmark_title {
+  line-height:130%;
+  font-size:110%;
+  overflow-wrap:anywhere ;
+  display: table;
 }
 
-.bookmark_title { line-height:130%;font-size:110%;overflow-wrap:anywhere }
 
 #edit_bookmark_form
 {
@@ -167,7 +197,7 @@ a:hover,.user_navbar a:hover,#tag_cloud_header a:hover {background:#292929!impor
 
 .display {border:none  !important;
 	width:100%;
-	padding:0 0 20px
+	padding:0 0 5px
 }
 
 .display .bookmark_title {
