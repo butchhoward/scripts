@@ -1,7 +1,7 @@
 /* ==UserStyle==
 @name           pinboard
 @namespace      github.com/butchhoward/scripts/stylus_styles
-@version        1.0.1
+@version        1.0.2
 @description    Pinboard styling
 @author         Butch Howard <butchhoward@gmail.com> (https://butchhoward.com)
 @license        CC-BY-SA-4.0
@@ -32,10 +32,6 @@
  .selected_star { color:#22a; }
 
 .star {
-    font-size:11px !important;
-    display:inline-block;
-    font-weight:bold;
-    margin: 0px 10px -25px -20px;
     display:none;
  }
 .star span {visibility:hidden}
