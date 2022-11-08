@@ -289,7 +289,10 @@ function _repo_wip_rebase_help()
 
 function repo_wip_rebase()
 {
-    local BASE_BRANCH=${1:-"$(repo_current_branch)"}
+    local CURRENT_BRANCH
+    CURRENT_BRANCH="$(repo_current_branch)"
+
+    local BASE_BRANCH=${1:-"${CURRENT_BRANCH}"}
 
     # create the wip branch from the current HEAD
     git branch -D "${DEFAULT_WIP_BRANCH}" &> /dev/null
@@ -304,7 +307,7 @@ function repo_wip_rebase()
         r=$?
         echo
         echo "=========="
-        echo "Resolve all conflicts then 'repo wip_merge ${BASE_BRANCH}' to complete"
+        echo "Resolve all conflicts then 'repo wip_merge ${CURRENT_BRANCH}' to complete"
         echo "=========="
         echo
         return $r
@@ -312,7 +315,7 @@ function repo_wip_rebase()
 
     # merge the rebased changes into the base branch for a clean merge line
     # if there are merge conflicts, you will have to resolve them and do the wip_merge separately
-    repo_wip_merge "${BASE_BRANCH}"
+    repo_wip_merge "${CURRENT_BRANCH}"
 }
 
 function _repo_committers_help()
