@@ -112,8 +112,8 @@ EOM
 
 function config_ensure_exists()
 {
-    if ! test -f "${CONFIG_FILE}" ; then
-        # can use jq to update a file, but it must exist first
+    if ! test -s "${CONFIG_FILE}" || ! jq -e '.' "${CONFIG_FILE}" > /dev/null 2>&1; then
+        # can use jq to update a file, but it must exist first and be valid json
         config_create_default
     fi
 }
@@ -123,7 +123,7 @@ function config_write_external_ip()
     local IP="$1"
     config_ensure_exists
     mv "${CONFIG_FILE}" "${CONFIG_FILE}.bak"
-    jq ".external_ip = \'${IP}\'" "${CONFIG_FILE}.bak" > "${CONFIG_FILE}"
+    jq ".external_ip = \"${IP}\"" "${CONFIG_FILE}.bak" > "${CONFIG_FILE}"
 }
 
 function config_read_external_ip()
