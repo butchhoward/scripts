@@ -53,6 +53,8 @@ Usage:
 
         -W ping waittime for packet response in milliseconds (same as the -W on the macos ping command)
 
+        -S speed test executed when network is either up at the beginning or returns to up after being down
+
         -- All arguments following are passed to processing commands
             This really only applies to "-d" and passes the list of IP addresses along
 
@@ -245,6 +247,15 @@ function number1_network()
     echo "Preferred network: ${the_one} (${is_enabled})"
 }
 
+function speed_test()
+{
+    if ${IS_MACOS} && type -t networkQuality &> /dev/null  ; then
+        networkQuality
+        SPEED_TEST_RUN=true
+    fi
+
+}
+
 function the_pinger()
 {
     local ping_wait="${PING_WAIT:+"-W ${PING_WAIT}"}"
@@ -301,6 +312,9 @@ function report_failed_internet()
 
             speak_internet_up
             internet_down=0
+            ${SPEED_TEST} && speed_test
+        else
+            ${SPEED_TEST} && ! ${SPEED_TEST_RUN} && speed_test
         fi
     else
         if ! (( internet_down )); then
@@ -419,6 +433,8 @@ CRITICAL_IPS=0
 ANNOUNCE_UP=false
 DIG_LOCAL=false
 USE_CONFIG_FILE=true
+SPEED_TEST=false
+SPEED_TEST_RUN=false
 declare -a IPS_TO_CHECK
 
 function set_opt_q()
@@ -495,6 +511,11 @@ function set_opt_c()
     CRITICAL_IPS="${1}"
     return 1
 }
+function set_opt_S()
+{
+    SPEED_TEST=true
+    return 0
+}
 function set_opt_help()
 {
     show_help
@@ -532,7 +553,7 @@ while (( "$#" )); do
     # -W 22
     # -qdu
     # -qdW 22
-    -+([hqQdDxuFvwWc?]) )
+    -+([hqQdDxuFvwWcS?]) )
         opts="$1"
         for (( i=1; i<${#opts}; i++ )); do
             opt="${1:$i:1}"
