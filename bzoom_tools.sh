@@ -14,7 +14,7 @@ function _bzoom_save_recordings_help()
     echo "  bzoom save_recordings archive_folder [pattern] [downloads_folder]"
     echo
     echo "  Copies a set of Zoom recording files from a downloads folder to an archive folder"
-    echo "      archive_folder   - where the recordings will be stored. Required"
+    echo "      archive_folder   - where the recordings will be stored. Required. Will be created if needed."
     echo "      pattern          - regex to match the recordins file name. [Optional] Defaults to '.*GMT.*Recording.*'"
     echo "      downloads_folder - folder where the recordings were saved from Zoom. [Optional] Defaults to '~/Downloads'"
 }
