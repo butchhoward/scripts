@@ -91,3 +91,18 @@ bimage_animated_gif()
 
     fi
 }
+
+_bimage_convert_heic_help()
+{
+    echo "bimage convert_to_png [files]"
+
+    echo "converts all image files referenced to PNG format"
+    echo "stores converted results in same folder as original"
+    echo
+}
+
+bimage_convert_to_png()
+{
+    local IMAGES=("$@")
+    magick mogrify -monitor -format png "${IMAGES[@]}"
+}
