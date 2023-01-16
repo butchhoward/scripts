@@ -26,8 +26,10 @@ function path_prepend ()
 }
 function path_remove ()
 {
+    set -x
     # shellcheck disable=SC2155
-    export PATH=$(echo -n "$PATH" | awk -v RS=: -v ORS=: '$0 != "'"$1"'"' | sed 's/:$//')
+    export PATH=$(printf "%s" "$PATH" | awk -v RS=: -v ORS=: '$0 != "'"$1"'"' | sed 's/:$//')
+    set +x
 }
 
 # Wifi Checker tools

@@ -256,7 +256,7 @@ function prepend_base_to_path()
     #A|images/discussions/2017-06-09_CAN-In-A-Box/can-in-a-box.jpg
     local PROJECT_BASE=$1
     local STATUS_AND_PATH=$2
-    echo "${STATUS_AND_PATH}" | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
+    printf "%s\n" "${STATUS_AND_PATH}" | sed -E "s#(.+)\|#\1|${PROJECT_BASE}/#"
 
 }
 
