@@ -15,7 +15,7 @@ _bimage_animated_gif_help()
 
 bimage_animated_gif()
 {
-    declare FF_SIZE_OPTION="-s 1280x720"
+    declare FF_SIZE_OPTION=("-s" "1280x720")
     declare USE_GIFSICLE=false
 
     while (( $# )); do
@@ -24,13 +24,13 @@ bimage_animated_gif()
 
         -s)
             # set scale size
-            FF_SIZE_OPTION="-s $2"
+            FF_SIZE_OPTION=("-s" "$2")
             shift; shift;
             ;;
 
         -S)
             # use default scale size (same as input)
-            FF_SIZE_OPTION=
+            FF_SIZE_OPTION=()
             shift;
             ;;
 
@@ -67,8 +67,7 @@ bimage_animated_gif()
             exit 3
         fi
 
-        # shellcheck disable=SC2086
-        ffmpeg -i "${INPUT_FILE}" ${FF_SIZE_OPTION} -pix_fmt rgb24 -r 10 -f gif -loglevel fatal - \
+        ffmpeg -i "${INPUT_FILE}" "${FF_SIZE_OPTION[@]}" -pix_fmt rgb24 -r 10 -f gif -loglevel fatal - \
             | gifsicle --optimize=3 --delay=3 > "${OUTPUT_FILE}"
 
     else
@@ -82,8 +81,7 @@ bimage_animated_gif()
 
         mkdir -p "${WORK_FOLDER}" || exit 1
 
-        # shellcheck disable=SC2086
-        ffmpeg -i "${INPUT_FILE}" ${FF_SIZE_OPTION} -pix_fmt rgb24 -r 10 -f gif -loglevel fatal "${WORK_FOLDER}/ffout%3d.png"
+        ffmpeg -i "${INPUT_FILE}" "${FF_SIZE_OPTION[@]}" -pix_fmt rgb24 -r 10 -f gif -loglevel fatal "${WORK_FOLDER}/ffout%3d.png"
 
         convert -delay 8 -loop 0 "${WORK_FOLDER}"/ffout*.png "${OUTPUT_FILE}"
 
