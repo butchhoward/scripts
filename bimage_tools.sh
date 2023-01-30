@@ -90,7 +90,7 @@ bimage_animated_gif()
     fi
 }
 
-_bimage_convert_heic_help()
+_bimage_convert_to_png_help()
 {
     echo "bimage convert_to_png [files]"
 
