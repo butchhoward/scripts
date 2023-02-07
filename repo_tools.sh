@@ -298,8 +298,15 @@ function repo_wip_rebase()
     git branch -D "${DEFAULT_WIP_BRANCH}" &> /dev/null
     git branch "${DEFAULT_WIP_BRANCH}" || return $?
 
-    # reset the current branch to origin/[branch]
-    git reset --hard "origin/${BASE_BRANCH}" || return $?
+    # reset the current branch to origin/[branch] IFF base is the same
+    if [[ "${BASE_BRANCH}" == "${CURRENT_BRANCH}" ]]; then
+        git reset --hard "origin/${BASE_BRANCH}" || return $?
+    else
+        #  else is it some other branch, probably main, get local up to date with remote
+        git switch "${BASE_BRANCH}" || return $?
+        git pull || return $?
+        git switch - || return $?
+    fi
 
     # change to the wip branch and rebase wip (which has all the new changes) onto the working branch (which has been reset)
     git checkout "${DEFAULT_WIP_BRANCH}" || return $?
