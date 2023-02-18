@@ -164,7 +164,8 @@ function venv_create()
     venv_remove "${location}"
 
     if [ ! -a "${location}" ]; then
-        if [[ ${version} -lt 3 ]]; then
+        # shellcheck disable=SC2071
+        if [[ "${version}" < "3" ]]; then
             # use virtualenvwrapper tools for the prehistoric pythons
             echo "using virtualenvwrapper for python 2.x to create environment '${location##*/}' because version='${version}'"
             # shellcheck disable=SC1091
