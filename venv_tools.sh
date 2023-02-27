@@ -164,6 +164,7 @@ function venv_create()
     venv_remove "${location}"
 
     if [ ! -a "${location}" ]; then
+        # this is actually a string comparison
         # shellcheck disable=SC2071
         if [[ "${version}" < "3" ]]; then
             # use virtualenvwrapper tools for the prehistoric pythons
