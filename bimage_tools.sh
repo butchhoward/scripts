@@ -107,49 +107,61 @@ bimage_convert_to_png()
 
 _bimage_add_meta_date_label_help()
 {
-    echo "bimage add_meta_label [files]"
-
-    echo "Adds a label inside the image with the Date the image was taken"
-    echo "stores converted results in folder under the current folder: labeled_images"
+    echo
+    echo "bimage add_meta_label <files>"
+    echo
+    echo "  Adds a label inside each image with the Date the image was taken"
+    echo
+    echo "  Stores converted results in folder: ./labeled_images/labeled"
+    echo "  Copies any files with errors to:: ./labeled_images/errors"
+    echo
+    echo "  <files> can be a glob or a single file. Does not recurse folders"
+    echo "  Possible errors are the file cannot be read as an image, does not have an EXIT Date value, etc."
     echo
 }
 
 bimage_add_meta_date_label()
 {
     if (( $# == 0 )); then
-        _bimage_add_meta_label_help
+        _bimage_add_meta_date_label_help
         return 1
     fi
 
-    DESTDIR="./labeled_images"
-    OUTDIR="${DESTDIR}/labeled"
-    ERRDIR="${DESTDIR}/errors"
+    declare DESTDIR="./labeled_images"
+    declare OUTDIR="${DESTDIR}/labeled"
+    declare ERRDIR="${DESTDIR}/errors"
 
     mkdir -p "${OUTDIR}"
     mkdir -p "${ERRDIR}"
 
     for SRC_IMAGE in "$@"; do
 
+        declare IMAGE
         IMAGE="$(basename "${SRC_IMAGE}")"
 
-        if ! EXIF_DATE="$(identify -format '%[EXIF:*]' "${SRC_IMAGE}" | grep 'exif:DateTimeOriginal')"; then
-            printf "No EXIF Date in SRC_IMAGE: %s\n" "${SRC_IMAGE}" >&2
+        declare -a EXIF_DATA
+        if ! _get_date_and_size "${SRC_IMAGE}" EXIF_DATA; then
+            printf "Cannot get EXIF data from SRC_IMAGE: %s\n" "${SRC_IMAGE}" >&2
             cp "${SRC_IMAGE}" "${ERRDIR}/${IMAGE}"
             continue
         fi
 
-        # exif:DateTimeOriginal=2013:12:14 16:35:04
-        #                       2013-12-14
-        EXIF_DATE="${EXIF_DATE##*=}"
-        EXIF_DATE="${EXIF_DATE%% *}"
-        EXIF_DATE="${EXIF_DATE//:/-}"
+        # EXIF_DATA=([0]="3888" [1]="2592" [2]="2018:07:21 17:20:43")
+        # [2] might not exist
+        declare LABEL_WIDTH="${EXIF_DATA[0]}"
+        (( LABEL_WIDTH = LABEL_WIDTH / 5 ))
 
-        W=$(identify -format '%w' "${SRC_IMAGE}")
-        (( W = W / 5 ))
+        declare EXIF_DATE
+        if (( "${#EXIF_DATA[@]}" >= 3 )); then
+            # "2018:07:21 17:20:43" --> "2018-07-21"
+            EXIF_DATE="${EXIF_DATA[2]}"
+            EXIF_DATE="${EXIF_DATE%% *}"
+            EXIF_DATE="${EXIF_DATE//:/-}"
+        fi
 
-        if ! convert "${SRC_IMAGE}" \
+        if [[ -z "${EXIF_DATE}" ]] || ! convert "${SRC_IMAGE}" \
                 \( \
-                -size "${W}" \
+                -size "${LABEL_WIDTH}" \
                 -background none \
                 -fill white label:"${EXIF_DATE}" \
                 \) \
@@ -166,4 +178,23 @@ bimage_add_meta_date_label()
     done
 
     return 0
+}
+
+_get_date_and_size()
+{
+    # $2 will be referenced and populated as an OUT ARRARY
+    # 0 - Width
+    # 1 - Height
+    # 2 - EXIF:DateTimeOriginal
+
+    declare SRC_IMAGE=$1
+    declare -n _out_PARTS=$2  # NAMEREF!! goofy naming to avoid nameref name collisions
+    declare DATA
+
+    if ! DATA="$(identify -format '%w|%h|%[EXIF:DateTimeOriginal]' "${SRC_IMAGE}" 2> /dev/null )"; then
+        return 1
+    fi
+
+    IFS='|' read -ra _out_PARTS <<< "${DATA}"
+
 }
