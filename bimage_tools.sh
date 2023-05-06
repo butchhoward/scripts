@@ -104,3 +104,59 @@ bimage_convert_to_png()
     local IMAGES=("$@")
     magick mogrify -monitor -format png "${IMAGES[@]}"
 }
+
+_bimage_add_meta_date_label_help()
+{
+    echo "bimage add_meta_label [files]"
+
+    echo "Adds a label inside the image with the Date the image was taken"
+    echo "stores converted results in folder under the current folder: labeled_images"
+    echo
+}
+
+bimage_add_meta_date_label()
+{
+    if (( $# == 0 )); then
+        _bimage_add_meta_label_help
+        return 1
+    fi
+
+    DESTDIR="./labeled_images"
+    OUTDIR="${DESTDIR}/labeled"
+    ERRDIR="${DESTDIR}/errors"
+
+    mkdir -p "${OUTDIR}"
+    mkdir -p "${ERRDIR}"
+
+    for image in "$@"; do
+
+        if ! EXIF_DATE="$(identify -format '%[EXIF:*]' "${image}" | grep 'exif:DateTimeOriginal')"; then
+            printf "No EXIF Date in image: %s\n" "${image}" >&2
+            cp "${image}" "${ERRDIR}/"
+            continue
+        fi
+
+        # exif:DateTimeOriginal=2013:12:14 16:35:04
+        #                       2013-12-14
+        EXIF_DATE="${EXIF_DATE##*=}"
+        EXIF_DATE="${EXIF_DATE%% *}"
+        EXIF_DATE="${EXIF_DATE//:/-}"
+
+        W=$(identify -format '%w' "${image}")
+        (( W = W / 5 ))
+
+        if ! convert "${image}" \( -size "${W}" \
+                -background none \
+                -fill white label:"${EXIF_DATE}" \
+                \) -gravity SouthEast \
+                -composite "${OUTDIR}/${image}"
+        then
+            printf "Could not label image: %s\n" "${image}" >&2
+            cp "${image}" "${ERRDIR}/"
+            continue
+        fi
+
+        printf "%s -> %s\n" "${image}" "${OUTDIR}/${image}"
+
+    done
+}
