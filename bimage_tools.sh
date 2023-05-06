@@ -128,11 +128,13 @@ bimage_add_meta_date_label()
     mkdir -p "${OUTDIR}"
     mkdir -p "${ERRDIR}"
 
-    for image in "$@"; do
+    for SRC_IMAGE in "$@"; do
 
-        if ! EXIF_DATE="$(identify -format '%[EXIF:*]' "${image}" | grep 'exif:DateTimeOriginal')"; then
-            printf "No EXIF Date in image: %s\n" "${image}" >&2
-            cp "${image}" "${ERRDIR}/"
+        IMAGE="$(basename "${SRC_IMAGE}")"
+
+        if ! EXIF_DATE="$(identify -format '%[EXIF:*]' "${SRC_IMAGE}" | grep 'exif:DateTimeOriginal')"; then
+            printf "No EXIF Date in SRC_IMAGE: %s\n" "${SRC_IMAGE}" >&2
+            cp "${SRC_IMAGE}" "${ERRDIR}/${IMAGE}"
             continue
         fi
 
@@ -142,21 +144,26 @@ bimage_add_meta_date_label()
         EXIF_DATE="${EXIF_DATE%% *}"
         EXIF_DATE="${EXIF_DATE//:/-}"
 
-        W=$(identify -format '%w' "${image}")
+        W=$(identify -format '%w' "${SRC_IMAGE}")
         (( W = W / 5 ))
 
-        if ! convert "${image}" \( -size "${W}" \
+        if ! convert "${SRC_IMAGE}" \
+                \( \
+                -size "${W}" \
                 -background none \
                 -fill white label:"${EXIF_DATE}" \
-                \) -gravity SouthEast \
-                -composite "${OUTDIR}/${image}"
+                \) \
+                -gravity SouthEast \
+                -composite "${OUTDIR}/${IMAGE}"
         then
-            printf "Could not label image: %s\n" "${image}" >&2
-            cp "${image}" "${ERRDIR}/"
+            printf "Could not label image: %s\n" "${SRC_IMAGE}" >&2
+            cp "${SRC_IMAGE}" "${ERRDIR}/${IMAGE}"
             continue
         fi
 
-        printf "%s -> %s\n" "${image}" "${OUTDIR}/${image}"
+        printf "%s -> %s\n" "${SRC_IMAGE}" "${OUTDIR}/${IMAGE}"
 
     done
+
+    return 0
 }
