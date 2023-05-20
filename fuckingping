@@ -109,6 +109,8 @@ function config_create_default()
 }
 EOM
 
+    mkdir -p "$(dirname "${CONFIG_FILE}")"
+
     echo "${DEFAULT_CONFIG}" > "${CONFIG_FILE}"
 }
 
