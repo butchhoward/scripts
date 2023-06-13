@@ -51,3 +51,22 @@ function pretty_json()
 {
     for f in *.json; do jq '.' "$f" > "mod_$f"; mv "mod_$f" "$f"; done
 }
+
+function capslock_tab()
+{
+    # https://developer.apple.com/library/archive/technotes/tn2450/_index.html
+
+    # map CAPSLOCK 0x700000039 to TAB 0x70000002B
+    # note that the Capslock Modifier setting must be the default (i.e. Caps Lock) for this to affect it
+
+    read -r -d '' KEY_MAPPING <<- EOM
+    {
+        "UserKeyMapping":[
+            {"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x70000002B}
+        ]
+    }
+EOM
+
+    hidutil property --set "${KEY_MAPPING}" &> /dev/null
+
+}

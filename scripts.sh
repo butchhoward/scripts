@@ -6,3 +6,6 @@ LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source "${LOCATION}"/misc.sh
 source "${LOCATION}"/venv_special.sh
+source "${LOCATION}/b_autocomplete.sh"
+
+capslock_tab
