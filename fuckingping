@@ -44,8 +44,13 @@ Usage:
             When the default list is used, the default value is 3 (house routers and cable modem).
 
         -v voice - use the "say" command voice name(s) specified
-            The default is "Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
+            The default is "${VOICE_LIST}"
             If a comma-delimited string of names is used, the errors will cycle through the voices.
+
+            Note: recent MacOS updates have relegated some voices to the cloud.
+                  If the script hangs on an announcement, go to
+                    Settings->Accessibility->System Voice->Manage Voices
+                  find the missing voices (see the list above) and download them from the cloud.
 
 
         -F define an alternate prefix, default is "Fucking"
@@ -62,10 +67,10 @@ Usage:
             This really only applies to "-d" and passes the list of IP addresses along
 
             The IP list is formatted with an identifying string a colon separate and the dotted-quad IP
-            If the identifier is not given it is ignored and Fiona will speak the IP directly.
+            If the identifier is not given it is ignored and the announcer will speak the IP directly.
 
             The current default list (neither -d or -x are used) is:
-            router:10.10.1.1 "cable modem":73.184.0.28 "xfinity DNS":75.75.75.75 openDNS:208.67.222.222 GoogleDNS:8.8.8.8 "Cloudflare DNS"1.1.1.1
+            router:10.10.1.1 "cable modem":73.184.0.28 "xfinity DNS":75.75.75.75 openDNS:208.67.222.222 GoogleDNS:8.8.8.8 "Cloudflare DNS":1.1.1.1
 
             The list when -x is used is the same with the "router" and "cable modem" addresses removed.
 
@@ -203,7 +208,7 @@ function speak_ping_fail()
     speak_loudly "${VOICES[${CURRENT_VOICE}]}" "${MSG}"
 
     ((++CURRENT_VOICE))
-    if (( CURRENT_VOICE >> "${#VOICES[@]}" )); then
+    if (( CURRENT_VOICE >= "${#VOICES[@]}" )); then
         CURRENT_VOICE=0
     fi
 }
@@ -265,15 +270,25 @@ function the_pinger()
 {
     local ping_wait="${PING_WAIT:+"-W ${PING_WAIT}"}"
     local ping_out
-    #shellcheck disable=SC2086
-    ping_out="$(ping -nqo ${ping_wait} -c 1 "$1" 2> /dev/null | tail -n 1)"
-    # round-trip min/avg/max/stddev = 18.845/18.845/18.845/0.000 ms
+    local rc=0
 
-    ping_out="${ping_out##*\ \=\ }"
-    # 18.845/18.845/18.845/0.000 ms
-    ping_out="${ping_out%%.*}"
-    # 18
-    echo "${ping_out}"
+    set -o pipefail
+    #shellcheck disable=SC2086
+    if ping_out="$(ping -nqo ${ping_wait} -c 1 "$1" 2> /dev/null | tail -n 1)"; then
+        # round-trip min/avg/max/stddev = 18.845/18.845/18.845/0.000 ms
+
+        ping_out="${ping_out##*\ \=\ }"
+        # 18.845/18.845/18.845/0.000 ms
+        ping_out="${ping_out%%.*}"
+        # 18
+        echo "${ping_out}"
+    else
+        rc=$?
+        printf "<%d>\n" $rc
+    fi
+    set +o pipefail
+
+    return $rc
 }
 
 function ping_the_list()
@@ -429,6 +444,7 @@ function report_opts()
 {
     echo "QUIETLY=${QUIETLY}"
     echo "VERY_QUIETLY=${VERY_QUIETLY}"
+    echo "REPORTING=${REPORTING}"
     echo "ANNOUNCE_UP=${ANNOUNCE_UP}"
     echo "VOICE_LIST=${VOICE_LIST}"
     echo "VULGAR_PREFIX=${VULGAR_PREFIX}"
@@ -444,7 +460,7 @@ QUIETLY=false
 VERY_QUIETLY=false
 REPORTING=false
 CURRENT_VOICE=0
-VOICE_LIST="Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
+VOICE_LIST="Moira,Tessa,Mei-jia,Xander,Daniel,Karen"
 LIST_PREP_COMMAND="default_list"
 LIST_DELAY=10
 PING_WAIT=
@@ -456,6 +472,7 @@ USE_CONFIG_FILE=true
 SPEED_TEST=false
 SPEED_TEST_RUN=false
 declare -a IPS_TO_CHECK
+NEED_HELP=false
 
 function set_opt_R()
 {
@@ -544,8 +561,8 @@ function set_opt_S()
 }
 function set_opt_help()
 {
-    show_help
-    exit 0
+    NEED_HELP=true
+    return 1
 }
 
 shopt -s extglob
@@ -602,11 +619,16 @@ done
 
 IFS=', ' read -r -a VOICES <<< "${VOICE_LIST}"
 
+"${LIST_PREP_COMMAND}" "$@"
+
+if ${NEED_HELP}; then
+    show_help
+    exit 0
+fi
+
 if ! ${VERY_QUIETLY}; then
     echo "Trying to ${VULGAR_PREFIX} Ping some IP addresses to check internet connectivity"
 fi
-
-"${LIST_PREP_COMMAND}" "$@"
 
 if ! ${QUIETLY}; then
     report_opts
