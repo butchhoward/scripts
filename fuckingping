@@ -18,6 +18,9 @@ Usage:
         -Q very Quiet -- does not log full failed status only an marker in the dots instead.
            Default is to log time and ip that failed.
 
+        -R Reporting -- Report data about connection (e.g. ping times during tests).
+           Default is to not report.
+
         -u Annouce Up -- speaks internet up and down messages even if q or Q are used (only summary message
             when state changes instead of all ping failures)
 
@@ -261,8 +264,16 @@ function speed_test()
 function the_pinger()
 {
     local ping_wait="${PING_WAIT:+"-W ${PING_WAIT}"}"
+    local ping_out
     #shellcheck disable=SC2086
-    ping -nqo ${ping_wait} -c 1 "$1" &> /dev/null
+    ping_out="$(ping -nqo ${ping_wait} -c 1 "$1" 2> /dev/null | tail -n 1)"
+    # round-trip min/avg/max/stddev = 18.845/18.845/18.845/0.000 ms
+
+    ping_out="${ping_out##*\ \=\ }"
+    # 18.845/18.845/18.845/0.000 ms
+    ping_out="${ping_out%%.*}"
+    # 18
+    echo "${ping_out}"
 }
 
 function ping_the_list()
@@ -275,9 +286,14 @@ function ping_the_list()
 
         local ip_name="${ip_value%%:*}"
         local ip="${ip_value##*:}"
+        local pinger_out
 
-        if the_pinger "${ip}"; then
-            printf "%s" "."
+        if pinger_out="$(the_pinger "${ip}")"; then
+            if ${REPORTING}; then
+                printf "%s" "${pinger_out},"
+            else
+                printf "%s" "."
+            fi
         else
             printf "%s" "*"
             if ! ${VERY_QUIETLY}; then
@@ -334,6 +350,7 @@ function report_failed_internet()
         fi
     fi
 
+    #shellcheck disable=SC2086
     return ${internet_down}
 }
 
@@ -425,6 +442,7 @@ function report_opts()
 
 QUIETLY=false
 VERY_QUIETLY=false
+REPORTING=false
 CURRENT_VOICE=0
 VOICE_LIST="Fiona,Tessa,Mei-jia,Xander,Daniel,Karen"
 LIST_PREP_COMMAND="default_list"
@@ -438,6 +456,12 @@ USE_CONFIG_FILE=true
 SPEED_TEST=false
 SPEED_TEST_RUN=false
 declare -a IPS_TO_CHECK
+
+function set_opt_R()
+{
+    REPORTING=true
+    return 0
+}
 
 function set_opt_q()
 {
@@ -555,7 +579,7 @@ while (( "$#" )); do
     # -W 22
     # -qdu
     # -qdW 22
-    -+([hqQdDxuFvwWcS?]) )
+    -+([hqQRdDxuFvwWcS?]) )
         opts="$1"
         for (( i=1; i<${#opts}; i++ )); do
             opt="${1:$i:1}"
